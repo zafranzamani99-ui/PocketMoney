@@ -12,7 +12,9 @@
       "Bash(grep:*)",
       "Bash(sed:*)",
       "Bash(git commit:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(npx expo start:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []
