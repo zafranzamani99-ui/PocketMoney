@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -33,18 +33,55 @@ const categories = [
   '🎯 Other',
 ]
 
-const wallets = [
-  { id: '1', name: 'Cash Wallet', type: 'cash' },
-  { id: '2', name: 'Bank Account', type: 'bank' },
-  { id: '3', name: 'E-Wallet', type: 'ewallet' },
-]
+interface Wallet {
+  id: string
+  name: string
+  type: 'cash' | 'bank' | 'ewallet' | 'credit'
+  balance: number
+}
 
 export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpenseModalProps) {
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
-  const [selectedWallet, setSelectedWallet] = useState(wallets[0].id)
+  const [selectedWallet, setSelectedWallet] = useState('')
   const [loading, setLoading] = useState(false)
+  const [wallets, setWallets] = useState<Wallet[]>([])
+  const [walletsLoading, setWalletsLoading] = useState(false)
+
+  useEffect(() => {
+    if (visible) {
+      loadWallets()
+    }
+  }, [visible])
+
+  const loadWallets = async () => {
+    setWalletsLoading(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('No user found')
+
+      const { data, error } = await supabase
+        .from('wallets')
+        .select('id, name, type, balance')
+        .eq('user_id', user.id)
+        .order('is_primary', { ascending: false })
+        .order('name')
+
+      if (error) throw error
+      setWallets(data || [])
+      
+      // Set default wallet to the first one (primary wallet)
+      if (data && data.length > 0 && !selectedWallet) {
+        setSelectedWallet(data[0].id)
+      }
+    } catch (error) {
+      console.error('Error loading wallets:', error)
+      Alert.alert('Error', 'Failed to load wallets')
+    } finally {
+      setWalletsLoading(false)
+    }
+  }
 
   const calculatorButtons = [
     ['C', '⌫', '%', '÷'],
@@ -54,6 +91,28 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
     ['00', '0', '.', '='],
   ]
 
+  const safeEvaluate = (expression: string): number => {
+    // Replace display operators with JavaScript operators
+    const jsExpression = expression.replace(/×/g, '*').replace(/÷/g, '/')
+    
+    // Basic validation - only allow numbers, operators, parentheses, and decimal points
+    const allowedChars = /^[0-9+\-*/.() %]+$/
+    if (!allowedChars.test(jsExpression)) {
+      throw new Error('Invalid characters in expression')
+    }
+    
+    // Use Function constructor as safer alternative to eval
+    try {
+      const result = new Function('return ' + jsExpression)()
+      if (typeof result !== 'number' || !isFinite(result)) {
+        throw new Error('Invalid result')
+      }
+      return result
+    } catch (error) {
+      throw new Error('Calculation error')
+    }
+  }
+
   const handleCalculatorPress = (value: string) => {
     if (value === 'C') {
       setAmount('')
@@ -61,7 +120,7 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
       setAmount(prev => prev.slice(0, -1))
     } else if (value === '=') {
       try {
-        const result = eval(amount.replace('×', '*').replace('÷', '/'))
+        const result = safeEvaluate(amount)
         setAmount(result.toString())
       } catch {
         Alert.alert('Error', 'Invalid calculation')
@@ -117,7 +176,7 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
     setAmount('')
     setDescription('')
     setSelectedCategory('')
-    setSelectedWallet(wallets[0].id)
+    setSelectedWallet(wallets.length > 0 ? wallets[0].id : '')
   }
 
   const handleClose = () => {
@@ -212,28 +271,45 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
 
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Wallet</Text>
-            <View style={styles.walletList}>
-              {wallets.map((wallet) => (
-                <TouchableOpacity
-                  key={wallet.id}
-                  style={[
-                    styles.walletButton,
-                    selectedWallet === wallet.id && styles.walletButtonSelected,
-                  ]}
-                  onPress={() => setSelectedWallet(wallet.id)}
-                >
-                  <View style={styles.walletInfo}>
-                    <Text style={styles.walletEmoji}>
-                      {wallet.type === 'cash' ? '💵' : wallet.type === 'bank' ? '🏦' : '📱'}
-                    </Text>
-                    <Text style={styles.walletName}>{wallet.name}</Text>
+            {walletsLoading ? (
+              <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Loading wallets...</Text>
+              </View>
+            ) : (
+              <View style={styles.walletList}>
+                {wallets.map((wallet) => (
+                  <TouchableOpacity
+                    key={wallet.id}
+                    style={[
+                      styles.walletButton,
+                      selectedWallet === wallet.id && styles.walletButtonSelected,
+                    ]}
+                    onPress={() => setSelectedWallet(wallet.id)}
+                  >
+                    <View style={styles.walletInfo}>
+                      <Text style={styles.walletEmoji}>
+                        {wallet.type === 'cash' ? '💵' : 
+                         wallet.type === 'bank' ? '🏦' : 
+                         wallet.type === 'credit' ? '💳' : '📱'}
+                      </Text>
+                      <View>
+                        <Text style={styles.walletName}>{wallet.name}</Text>
+                        <Text style={styles.walletBalance}>RM {wallet.balance.toFixed(2)}</Text>
+                      </View>
+                    </View>
+                    {selectedWallet === wallet.id && (
+                      <Text style={styles.walletCheck}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+                {wallets.length === 0 && (
+                  <View style={styles.emptyWallets}>
+                    <Text style={styles.emptyWalletsText}>No wallets found</Text>
+                    <Text style={styles.emptyWalletsSubtext}>Please add a wallet first</Text>
                   </View>
-                  {selectedWallet === wallet.id && (
-                    <Text style={styles.walletCheck}>✓</Text>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
+                )}
+              </View>
+            )}
           </View>
         </ScrollView>
       </View>
@@ -257,7 +333,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: Typography.fontSizes.subheading,
-    fontWeight: Typography.fontWeights.bold,
+    fontFamily: Typography.fontFamily.bold,
     color: Colors.textPrimary,
   },
   cancelButton: {
@@ -267,7 +343,7 @@ const styles = StyleSheet.create({
   saveButton: {
     fontSize: Typography.fontSizes.body,
     color: Colors.primary,
-    fontWeight: Typography.fontWeights.medium,
+    fontFamily: Typography.fontFamily.medium,
   },
   disabledButton: {
     opacity: 0.5,
@@ -282,7 +358,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: Typography.fontSizes.body,
-    fontWeight: Typography.fontWeights.medium,
+    fontFamily: Typography.fontFamily.medium,
     color: Colors.textSecondary,
     marginBottom: Spacing.md,
   },
@@ -297,7 +373,7 @@ const styles = StyleSheet.create({
   },
   amountText: {
     fontSize: Typography.fontSizes.heading * 1.5,
-    fontWeight: Typography.fontWeights.bold,
+    fontFamily: Typography.fontFamily.bold,
     color: Colors.textPrimary,
     minWidth: 100,
   },
@@ -329,7 +405,7 @@ const styles = StyleSheet.create({
   calculatorButtonText: {
     fontSize: Typography.fontSizes.subheading,
     color: Colors.textPrimary,
-    fontWeight: Typography.fontWeights.medium,
+    fontFamily: Typography.fontFamily.medium,
   },
   operatorButtonText: {
     color: Colors.primary,
@@ -375,7 +451,7 @@ const styles = StyleSheet.create({
   },
   categoryButtonTextSelected: {
     color: Colors.textPrimary,
-    fontWeight: Typography.fontWeights.medium,
+    fontFamily: Typography.fontFamily.medium,
   },
   walletList: {
     gap: Spacing.sm,
@@ -405,11 +481,42 @@ const styles = StyleSheet.create({
   walletName: {
     fontSize: Typography.fontSizes.body,
     color: Colors.textPrimary,
-    fontWeight: Typography.fontWeights.medium,
+    fontFamily: Typography.fontFamily.medium,
+    marginBottom: Spacing.xs,
   },
   walletCheck: {
     fontSize: Typography.fontSizes.subheading,
     color: Colors.primary,
-    fontWeight: Typography.fontWeights.bold,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  walletBalance: {
+    fontSize: Typography.fontSizes.caption,
+    color: Colors.textSecondary,
+    fontFamily: Typography.fontFamily.regular,
+  },
+  loadingContainer: {
+    padding: Spacing.lg,
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: Typography.fontSizes.body,
+    color: Colors.textSecondary,
+    fontFamily: Typography.fontFamily.regular,
+  },
+  emptyWallets: {
+    padding: Spacing.lg,
+    alignItems: 'center',
+  },
+  emptyWalletsText: {
+    fontSize: Typography.fontSizes.body,
+    color: Colors.textSecondary,
+    fontFamily: Typography.fontFamily.medium,
+    marginBottom: Spacing.xs,
+  },
+  emptyWalletsSubtext: {
+    fontSize: Typography.fontSizes.caption,
+    color: Colors.textSecondary,
+    fontFamily: Typography.fontFamily.regular,
+    textAlign: 'center',
   },
 })

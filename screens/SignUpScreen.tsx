@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
 import { supabase } from '../lib/supabase'
 
@@ -18,7 +19,7 @@ interface SignUpScreenProps {
   onNavigateToLogin: () => void
 }
 
-const businessTypes = ['Retail', 'Food', 'Service', 'Online']
+const businessTypes = ['Retail', 'Food & Beverage', 'Service', 'Online', 'Technology', 'Healthcare', 'Education', 'Manufacturing', 'Construction', 'Other']
 
 export default function SignUpScreen({ onSignUpSuccess, onNavigateToLogin }: SignUpScreenProps) {
   const [email, setEmail] = useState('')
@@ -70,10 +71,11 @@ export default function SignUpScreen({ onSignUpSuccess, onNavigateToLogin }: Sig
   }
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <KeyboardAvoidingView 
+        style={styles.keyboardContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <View style={styles.header}>
@@ -175,7 +177,8 @@ export default function SignUpScreen({ onSignUpSuccess, onNavigateToLogin }: Sig
           </View>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   )
 }
 
@@ -183,6 +186,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  keyboardContainer: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,

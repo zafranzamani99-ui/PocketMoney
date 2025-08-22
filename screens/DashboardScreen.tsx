@@ -5,10 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
   Platform,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
@@ -31,6 +31,28 @@ interface Order {
   created_at: string
 }
 
+interface DashboardStats {
+  todaySales: number
+  todayExpenses: number
+  todayProfit: number
+  salesChange: string
+  expensesChange: string
+  profitMargin: number
+}
+
+interface RecentTransaction {
+  id: string
+  type: 'income' | 'expense'
+  description: string
+  amount: string
+  time: string
+}
+
+interface User {
+  business_name: string | null
+  email: string
+}
+
 export default function DashboardScreen() {
   const navigation = useNavigation<NavigationProp>()
   const [showAddExpense, setShowAddExpense] = useState(false)
@@ -38,7 +60,18 @@ export default function DashboardScreen() {
   const [showWhatsAppParser, setShowWhatsAppParser] = useState(false)
   const [showWalletManagement, setShowWalletManagement] = useState(false)
   const [pendingOrders, setPendingOrders] = useState<Order[]>([])
+  const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([])
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
+    todaySales: 0,
+    todayExpenses: 0,
+    todayProfit: 0,
+    salesChange: '+0%',
+    expensesChange: '+0%',
+    profitMargin: 0
+  })
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(false)
+  const [statsLoading, setStatsLoading] = useState(true)
 
   const handleExpenseSuccess = () => {
     setShowAddExpense(false)
@@ -62,8 +95,170 @@ export default function DashboardScreen() {
   }
 
   useEffect(() => {
-    loadPendingOrders()
+    loadDashboardData()
   }, [])
+
+  const loadDashboardData = async () => {
+    await Promise.all([
+      loadUserProfile(),
+      loadPendingOrders(),
+      loadDashboardStats(),
+      loadRecentTransactions()
+    ])
+    setStatsLoading(false)
+  }
+
+  const loadUserProfile = async () => {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) return
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('business_name, email')
+        .eq('id', authUser.id)
+        .single()
+
+      if (error) throw error
+      setUser(data)
+    } catch (error) {
+      console.error('Error loading user profile:', error)
+    }
+  }
+
+  const loadDashboardStats = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const today = new Date()
+      const todayStart = new Date(today.setHours(0, 0, 0, 0)).toISOString()
+      const todayEnd = new Date(today.setHours(23, 59, 59, 999)).toISOString()
+
+      const yesterday = new Date()
+      yesterday.setDate(yesterday.getDate() - 1)
+      const yesterdayStart = new Date(yesterday.setHours(0, 0, 0, 0)).toISOString()
+      const yesterdayEnd = new Date(yesterday.setHours(23, 59, 59, 999)).toISOString()
+
+      // Get today's sales (completed orders)
+      const { data: todaySalesData } = await supabase
+        .from('orders')
+        .select('amount')
+        .eq('user_id', user.id)
+        .neq('status', 'pending')
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEnd)
+
+      const todaySales = todaySalesData?.reduce((sum, order) => sum + order.amount, 0) || 0
+
+      // Get yesterday's sales for comparison
+      const { data: yesterdaySalesData } = await supabase
+        .from('orders')
+        .select('amount')
+        .eq('user_id', user.id)
+        .neq('status', 'pending')
+        .gte('created_at', yesterdayStart)
+        .lte('created_at', yesterdayEnd)
+
+      const yesterdaySales = yesterdaySalesData?.reduce((sum, order) => sum + order.amount, 0) || 0
+
+      // Get today's expenses
+      const { data: todayExpensesData } = await supabase
+        .from('expenses')
+        .select('amount')
+        .eq('user_id', user.id)
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEnd)
+
+      const todayExpenses = todayExpensesData?.reduce((sum, expense) => sum + expense.amount, 0) || 0
+
+      // Get yesterday's expenses for comparison
+      const { data: yesterdayExpensesData } = await supabase
+        .from('expenses')
+        .select('amount')
+        .eq('user_id', user.id)
+        .gte('created_at', yesterdayStart)
+        .lte('created_at', yesterdayEnd)
+
+      const yesterdayExpenses = yesterdayExpensesData?.reduce((sum, expense) => sum + expense.amount, 0) || 0
+
+      const todayProfit = todaySales - todayExpenses
+      const profitMargin = todaySales > 0 ? (todayProfit / todaySales) * 100 : 0
+
+      // Calculate percentage changes
+      const salesChange = yesterdaySales > 0 
+        ? `${((todaySales - yesterdaySales) / yesterdaySales * 100).toFixed(0)}%` 
+        : '+0%'
+      const expensesChange = yesterdayExpenses > 0 
+        ? `${((todayExpenses - yesterdayExpenses) / yesterdayExpenses * 100).toFixed(0)}%` 
+        : '+0%'
+
+      setDashboardStats({
+        todaySales,
+        todayExpenses,
+        todayProfit,
+        salesChange: todaySales >= yesterdaySales ? `+${salesChange}` : salesChange,
+        expensesChange: todayExpenses >= yesterdayExpenses ? `+${expensesChange}` : expensesChange,
+        profitMargin
+      })
+    } catch (error) {
+      console.error('Error loading dashboard stats:', error)
+    }
+  }
+
+  const loadRecentTransactions = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Get recent expenses
+      const { data: expensesData } = await supabase
+        .from('expenses')
+        .select('id, amount, description, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(3)
+
+      // Get recent orders
+      const { data: ordersData } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          amount,
+          created_at,
+          customers (name)
+        `)
+        .eq('user_id', user.id)
+        .neq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(3)
+
+      const expenses = (expensesData || []).map(expense => ({
+        id: expense.id,
+        type: 'expense' as const,
+        description: expense.description || 'Expense',
+        amount: `RM ${expense.amount.toFixed(2)}`,
+        time: formatTime(expense.created_at)
+      }))
+
+      const income = (ordersData || []).map(order => ({
+        id: order.id,
+        type: 'income' as const,
+        description: order.customers?.name ? `Sale to ${order.customers.name}` : 'Sale',
+        amount: `RM ${order.amount.toFixed(2)}`,
+        time: formatTime(order.created_at)
+      }))
+
+      // Combine and sort by time
+      const allTransactions = [...expenses, ...income]
+        .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+        .slice(0, 3)
+
+      setRecentTransactions(allTransactions)
+    } catch (error) {
+      console.error('Error loading recent transactions:', error)
+    }
+  }
 
   const loadPendingOrders = async () => {
     try {
@@ -103,39 +298,73 @@ export default function DashboardScreen() {
     return date.toLocaleDateString()
   }
 
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleTimeString('en-MY', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
 
-  const [recentTransactions, setRecentTransactions] = useState<any[]>([])
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good morning! ☀️'
+    if (hour < 18) return 'Good afternoon! 🌤️'
+    return 'Good evening! 🌙'
+  }
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.greeting}>Good morning! 👋</Text>
-          <Text style={styles.businessName}>Ali's Warung</Text>
+          <Text style={styles.greeting}>{getGreeting()}</Text>
+          <Text style={styles.businessName}>
+            {user?.business_name || user?.email || 'Welcome'}
+          </Text>
         </View>
 
         <View style={styles.summaryCards}>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Today's Sales</Text>
-            <Text style={styles.summaryValue}>RM 245.00</Text>
-            <Text style={styles.summaryChange}>+12% from yesterday</Text>
+            <Text style={styles.summaryValue}>
+              {statsLoading ? 'Loading...' : `RM ${dashboardStats.todaySales.toFixed(2)}`}
+            </Text>
+            <Text style={[styles.summaryChange, 
+              dashboardStats.salesChange.startsWith('+') ? { color: Colors.success } : { color: Colors.error }
+            ]}>
+              {statsLoading ? '...' : `${dashboardStats.salesChange} from yesterday`}
+            </Text>
           </View>
           
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Today's Expenses</Text>
-            <Text style={styles.summaryValue}>RM 85.50</Text>
-            <Text style={styles.summaryChange}>-5% from yesterday</Text>
+            <Text style={styles.summaryValue}>
+              {statsLoading ? 'Loading...' : `RM ${dashboardStats.todayExpenses.toFixed(2)}`}
+            </Text>
+            <Text style={[styles.summaryChange,
+              dashboardStats.expensesChange.startsWith('-') ? { color: Colors.success } : { color: Colors.error }
+            ]}>
+              {statsLoading ? '...' : `${dashboardStats.expensesChange} from yesterday`}
+            </Text>
           </View>
         </View>
 
         <View style={styles.profitCard}>
           <Text style={styles.profitLabel}>Today's Profit</Text>
-          <Text style={styles.profitValue}>RM 159.50</Text>
+          <Text style={[styles.profitValue, 
+            dashboardStats.todayProfit < 0 ? { color: Colors.error } : {}
+          ]}>
+            {statsLoading ? 'Loading...' : `RM ${dashboardStats.todayProfit.toFixed(2)}`}
+          </Text>
           <View style={styles.profitBar}>
-            <View style={[styles.profitBarFill, { width: '65%' }]} />
+            <View style={[styles.profitBarFill, { 
+              width: `${Math.max(0, Math.min(100, dashboardStats.profitMargin))}%` 
+            }]} />
           </View>
-          <Text style={styles.profitPercentage}>65% profit margin</Text>
+          <Text style={styles.profitPercentage}>
+            {statsLoading ? 'Calculating...' : `${dashboardStats.profitMargin.toFixed(0)}% profit margin`}
+          </Text>
         </View>
 
         {pendingOrders.length > 0 && (
@@ -281,7 +510,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    paddingTop: Platform.OS === 'ios' ? Spacing.md : Spacing.lg,
   },
   scrollView: {
     flex: 1,
@@ -289,7 +517,6 @@ const styles = StyleSheet.create({
   header: {
     padding: Spacing.lg,
     paddingBottom: Spacing.md,
-    paddingTop: Platform.OS === 'android' ? Spacing.xl : Spacing.lg,
   },
   greeting: {
     fontSize: Typography.fontSizes.body,
@@ -331,7 +558,6 @@ const styles = StyleSheet.create({
   summaryChange: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.success,
   },
   profitCard: {
     backgroundColor: Colors.primary + '20',

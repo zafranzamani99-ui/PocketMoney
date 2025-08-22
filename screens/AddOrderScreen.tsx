@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   TextInput,
@@ -11,6 +10,7 @@ import {
   Modal,
   Platform,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -60,6 +60,35 @@ export default function AddOrderScreen() {
     price: '',
     quantity: '1',
   })
+
+  // Memoized handlers to prevent input focus loss
+  const updateNotes = useCallback((text: string) => {
+    setNotes(text)
+  }, [])
+
+  const updateNewCustomerName = useCallback((text: string) => {
+    setNewCustomer(prev => ({ ...prev, name: text }))
+  }, [])
+
+  const updateNewCustomerPhone = useCallback((text: string) => {
+    setNewCustomer(prev => ({ ...prev, phone: text }))
+  }, [])
+
+  const updateNewCustomerEmail = useCallback((text: string) => {
+    setNewCustomer(prev => ({ ...prev, email: text }))
+  }, [])
+
+  const updateNewItemName = useCallback((text: string) => {
+    setNewItem(prev => ({ ...prev, name: text }))
+  }, [])
+
+  const updateNewItemPrice = useCallback((text: string) => {
+    setNewItem(prev => ({ ...prev, price: text }))
+  }, [])
+
+  const updateNewItemQuantity = useCallback((text: string) => {
+    setNewItem(prev => ({ ...prev, quantity: text }))
+  }, [])
 
   useEffect(() => {
     loadCustomers()
@@ -261,7 +290,7 @@ export default function AddOrderScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <LinearGradient
         colors={[Colors.primary, Colors.secondary]}
         style={styles.header}
@@ -430,7 +459,9 @@ export default function AddOrderScreen() {
               placeholder="Add any special instructions or notes..."
               placeholderTextColor={Colors.textSecondary}
               value={notes}
-              onChangeText={setNotes}
+              onChangeText={updateNotes}
+              multiline
+              blurOnSubmit={false}
               multiline
               numberOfLines={3}
               textAlignVertical="top"
@@ -467,7 +498,9 @@ export default function AddOrderScreen() {
               placeholder="Customer Name *"
               placeholderTextColor={Colors.textSecondary}
               value={newCustomer.name}
-              onChangeText={(text) => setNewCustomer({...newCustomer, name: text})}
+              onChangeText={updateNewCustomerName}
+              returnKeyType="next"
+              blurOnSubmit={false}
             />
 
             <TextInput
@@ -475,8 +508,10 @@ export default function AddOrderScreen() {
               placeholder="Phone Number"
               placeholderTextColor={Colors.textSecondary}
               value={newCustomer.phone}
-              onChangeText={(text) => setNewCustomer({...newCustomer, phone: text})}
+              onChangeText={updateNewCustomerPhone}
               keyboardType="phone-pad"
+              returnKeyType="next"
+              blurOnSubmit={false}
             />
 
             <TextInput
@@ -484,8 +519,11 @@ export default function AddOrderScreen() {
               placeholder="Email Address"
               placeholderTextColor={Colors.textSecondary}
               value={newCustomer.email}
-              onChangeText={(text) => setNewCustomer({...newCustomer, email: text})}
+              onChangeText={updateNewCustomerEmail}
               keyboardType="email-address"
+              returnKeyType="done"
+              autoCapitalize="none"
+              blurOnSubmit={false}
             />
 
             <View style={styles.modalActions}>
@@ -517,7 +555,9 @@ export default function AddOrderScreen() {
               placeholder="Item Name *"
               placeholderTextColor={Colors.textSecondary}
               value={newItem.name}
-              onChangeText={(text) => setNewItem({...newItem, name: text})}
+              onChangeText={updateNewItemName}
+              returnKeyType="next"
+              blurOnSubmit={false}
             />
 
             <TextInput
@@ -525,8 +565,10 @@ export default function AddOrderScreen() {
               placeholder="Price (RM) *"
               placeholderTextColor={Colors.textSecondary}
               value={newItem.price}
-              onChangeText={(text) => setNewItem({...newItem, price: text})}
-              keyboardType="numeric"
+              onChangeText={updateNewItemPrice}
+              keyboardType="decimal-pad"
+              returnKeyType="next"
+              blurOnSubmit={false}
             />
 
             <TextInput
@@ -534,8 +576,10 @@ export default function AddOrderScreen() {
               placeholder="Quantity"
               placeholderTextColor={Colors.textSecondary}
               value={newItem.quantity}
-              onChangeText={(text) => setNewItem({...newItem, quantity: text})}
-              keyboardType="numeric"
+              onChangeText={updateNewItemQuantity}
+              keyboardType="number-pad"
+              returnKeyType="done"
+              blurOnSubmit={false}
             />
 
             <View style={styles.modalActions}>
@@ -569,13 +613,11 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.lg,
     borderBottomLeftRadius: BorderRadius.xl,
     borderBottomRightRadius: BorderRadius.xl,
-    paddingTop: Platform.OS === 'android' ? Spacing.xl : Spacing.lg,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Platform.OS === 'ios' ? Spacing.lg : Spacing.md,
     marginBottom: Spacing.lg,
   },
   backButton: {

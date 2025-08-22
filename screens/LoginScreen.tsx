@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
 import { supabase } from '../lib/supabase'
 
@@ -48,10 +49,11 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToSignUp }: Logi
   }
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <KeyboardAvoidingView 
+        style={styles.keyboardContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.logo}>💰</Text>
@@ -103,7 +105,8 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToSignUp }: Logi
           </TouchableOpacity>
         </View>
       </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   )
 }
 
@@ -111,6 +114,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  keyboardContainer: {
+    flex: 1,
   },
   content: {
     flex: 1,

@@ -1,27 +1,43 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   FlatList,
   TextInput,
+  Alert,
   Platform,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { supabase } from '../lib/supabase'
 import CalendarFilter from '../components/CalendarFilter'
 import TransactionDetailModal from '../components/TransactionDetailModal'
 
+
+interface Transaction {
+  id: string
+  type: 'income' | 'expense'
+  amount: number
+  category: string
+  description: string | null
+  created_at: string
+  receipt_url?: string | null
+  payment_method?: string | null
+  customer?: string
+  notes?: string
+}
 
 export default function TransactionsScreen() {
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedDate, setSelectedDate] = useState('')
   const [showCalendar, setShowCalendar] = useState(false)
-  const [transactions, setTransactions] = useState<any[]>([])
-  const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [showTransactionDetail, setShowTransactionDetail] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const filteredTransactions = transactions.filter(transaction => {
     const matchesFilter = filter === 'all' || transaction.type === filter
@@ -36,6 +52,90 @@ export default function TransactionsScreen() {
     setShowTransactionDetail(true)
   }
 
+  useEffect(() => {
+    loadTransactions()
+  }, [])
+
+  const loadTransactions = async () => {
+    setLoading(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('No user found')
+
+      // Load expenses
+      const { data: expensesData, error: expensesError } = await supabase
+        .from('expenses')
+        .select(`
+          id,
+          amount,
+          category,
+          description,
+          created_at,
+          receipt_url
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (expensesError) throw expensesError
+
+      // Load orders as income
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          amount,
+          created_at,
+          payment_method,
+          notes,
+          customers (name)
+        `)
+        .eq('user_id', user.id)
+        .neq('status', 'pending')
+        .order('created_at', { ascending: false })
+
+      if (ordersError) throw ordersError
+
+      // Transform expenses
+      const expenses: Transaction[] = (expensesData || []).map(expense => ({
+        id: expense.id,
+        type: 'expense' as const,
+        amount: expense.amount,
+        category: expense.category,
+        description: expense.description,
+        created_at: expense.created_at,
+        receipt_url: expense.receipt_url,
+        payment_method: null,
+        customer: null,
+        notes: null
+      }))
+
+      // Transform orders to income transactions
+      const income: Transaction[] = (ordersData || []).map(order => ({
+        id: order.id,
+        type: 'income' as const,
+        amount: order.amount,
+        category: 'Sales',
+        description: order.customers?.name ? `Order from ${order.customers.name}` : 'Order',
+        created_at: order.created_at,
+        receipt_url: null,
+        payment_method: order.payment_method,
+        customer: order.customers?.name || null,
+        notes: order.notes
+      }))
+
+      // Combine and sort by date
+      const allTransactions = [...expenses, ...income]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+      setTransactions(allTransactions)
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load transactions')
+      console.error('Error loading transactions:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const formatSelectedDate = () => {
     if (!selectedDate) return 'All Dates'
     const date = new Date(selectedDate)
@@ -46,7 +146,23 @@ export default function TransactionsScreen() {
     })
   }
 
-  const renderTransaction = ({ item }: { item: any }) => (
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-MY', {
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleTimeString('en-MY', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const renderTransaction = ({ item }: { item: Transaction }) => (
     <TouchableOpacity 
       style={styles.transactionItem}
       onPress={() => handleTransactionPress(item)}
@@ -60,7 +176,7 @@ export default function TransactionsScreen() {
         <View style={styles.transactionDetails}>
           <Text style={styles.transactionDescription}>{item.description}</Text>
           <Text style={styles.transactionCategory}>{item.category}</Text>
-          <Text style={styles.transactionDateTime}>{item.date} • {item.time}</Text>
+          <Text style={styles.transactionDateTime}>{formatDate(item.created_at)} • {formatTime(item.created_at)}</Text>
         </View>
       </View>
       <View style={styles.transactionRight}>
@@ -76,7 +192,7 @@ export default function TransactionsScreen() {
   )
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <Text style={styles.title}>Transactions</Text>
         <View style={styles.headerActions}>
@@ -153,6 +269,17 @@ export default function TransactionsScreen() {
         style={styles.transactionsList}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.transactionsListContent}
+        refreshing={loading}
+        onRefresh={loadTransactions}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyEmoji}>💸</Text>
+            <Text style={styles.emptyTitle}>No Transactions Yet</Text>
+            <Text style={styles.emptyText}>
+              Start adding expenses or processing orders to see your transaction history here.
+            </Text>
+          </View>
+        }
       />
 
       <CalendarFilter
@@ -175,7 +302,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    paddingTop: Platform.OS === 'ios' ? Spacing.md : Spacing.lg,
   },
   header: {
     flexDirection: 'row',
@@ -183,7 +309,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    paddingTop: Platform.OS === 'android' ? Spacing.lg : Spacing.md,
   },
   title: {
     fontSize: Typography.fontSizes.heading,
@@ -373,5 +498,27 @@ const styles = StyleSheet.create({
   },
   expenseAmount: {
     color: Colors.error,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xxl * 2,
+  },
+  emptyEmoji: {
+    fontSize: 64,
+    marginBottom: Spacing.lg,
+  },
+  emptyTitle: {
+    fontSize: Typography.fontSizes.subheading,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.sm,
+  },
+  emptyText: {
+    fontSize: Typography.fontSizes.body,
+    fontFamily: Typography.fontFamily.regular,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: Typography.lineHeights.body,
+    paddingHorizontal: Spacing.lg,
   },
 })

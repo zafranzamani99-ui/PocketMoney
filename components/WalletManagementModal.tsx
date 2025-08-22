@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: Typography.fontSizes.subheading,
-    fontWeight: Typography.fontWeights.bold,
+    fontFamily: Typography.fontFamily.bold,
     color: Colors.textPrimary,
   },
   cancelButton: {
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   addButton: {
     fontSize: Typography.fontSizes.body,
     color: Colors.primary,
-    fontWeight: Typography.fontWeights.medium,
+    fontFamily: Typography.fontFamily.medium,
   },
   content: {
     flex: 1,
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
   },
   totalBalanceValue: {
     fontSize: Typography.fontSizes.heading * 1.2,
-    fontWeight: Typography.fontWeights.bold,
+    fontFamily: Typography.fontFamily.bold,
     color: Colors.textPrimary,
     marginBottom: Spacing.md,
   },
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
   transferButtonText: {
     fontSize: Typography.fontSizes.body,
     color: Colors.textPrimary,
-    fontWeight: Typography.fontWeights.medium,
+    fontFamily: Typography.fontFamily.medium,
   },
   disabledButtonText: {
     opacity: 0.5,
@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
   },
   walletName: {
     fontSize: Typography.fontSizes.body,
-    fontWeight: Typography.fontWeights.bold,
+    fontFamily: Typography.fontFamily.bold,
     color: Colors.textPrimary,
   },
   walletType: {
@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
   },
   walletBalance: {
     fontSize: Typography.fontSizes.subheading,
-    fontWeight: Typography.fontWeights.bold,
+    fontFamily: Typography.fontFamily.bold,
     color: Colors.textPrimary,
     marginBottom: Spacing.xs,
   },
@@ -548,9 +548,9 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
   },
   primaryBadgeText: {
-    fontSize: Typography.fontSizes.small,
+    fontSize: Typography.fontSizes.caption,
     color: Colors.textPrimary,
-    fontWeight: Typography.fontWeights.bold,
+    fontFamily: Typography.fontFamily.bold,
   },
   walletControls: {
     flexDirection: 'row',
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
   controlButtonText: {
     fontSize: Typography.fontSizes.body,
     color: Colors.primary,
-    fontWeight: Typography.fontWeights.medium,
+    fontFamily: Typography.fontFamily.medium,
   },
   deleteButtonText: {
     color: Colors.error,
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
   },
   formTitle: {
     fontSize: Typography.fontSizes.subheading,
-    fontWeight: Typography.fontWeights.bold,
+    fontFamily: Typography.fontFamily.bold,
     color: Colors.textPrimary,
     marginBottom: Spacing.lg,
   },
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: Typography.fontSizes.body,
-    fontWeight: Typography.fontWeights.medium,
+    fontFamily: Typography.fontFamily.medium,
     color: Colors.textPrimary,
     marginBottom: Spacing.sm,
   },
@@ -633,7 +633,7 @@ const styles = StyleSheet.create({
   },
   typeTextSelected: {
     color: Colors.primary,
-    fontWeight: Typography.fontWeights.medium,
+    fontFamily: Typography.fontFamily.medium,
   },
   walletSelector: {
     gap: Spacing.sm,
@@ -681,6 +681,6 @@ const styles = StyleSheet.create({
   formSaveButtonText: {
     fontSize: Typography.fontSizes.body,
     color: Colors.textPrimary,
-    fontWeight: Typography.fontWeights.medium,
+    fontFamily: Typography.fontFamily.medium,
   },
 })

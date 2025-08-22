@@ -108,6 +108,8 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
   auto_sync_sheets BOOLEAN DEFAULT FALSE,
+  theme_mode TEXT CHECK (theme_mode IN ('light', 'dark', 'system')) DEFAULT 'system',
+  security_settings JSONB DEFAULT '{}',
   premium_expires_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -371,8 +373,8 @@ BEGIN
   );
 
   -- Create default user settings if none exist
-  INSERT INTO public.user_settings (user_id, auto_sync_sheets)
-  VALUES (NEW.id, false)
+  INSERT INTO public.user_settings (user_id, auto_sync_sheets, theme_mode, security_settings)
+  VALUES (NEW.id, false, 'system', '{}')
   ON CONFLICT (user_id) DO NOTHING;
 
   RETURN NEW;
@@ -422,12 +424,28 @@ LEFT JOIN public.wallets wallets ON users.id = wallets.user_id
 WHERE wallets.user_id IS NULL;
 
 -- Ensure all users have settings
-INSERT INTO public.user_settings (user_id, auto_sync_sheets)
-SELECT users.id, false 
+INSERT INTO public.user_settings (user_id, auto_sync_sheets, theme_mode, security_settings)
+SELECT users.id, false, 'system', '{}'
 FROM public.users users
 LEFT JOIN public.user_settings settings ON users.id = settings.user_id
 WHERE settings.user_id IS NULL
 ON CONFLICT (user_id) DO NOTHING;
+
+-- Add missing columns to existing user_settings table if they don't exist
+ALTER TABLE public.user_settings 
+ADD COLUMN IF NOT EXISTS theme_mode TEXT CHECK (theme_mode IN ('light', 'dark', 'system')) DEFAULT 'system';
+
+ALTER TABLE public.user_settings 
+ADD COLUMN IF NOT EXISTS security_settings JSONB DEFAULT '{}';
+
+-- Update existing user_settings records with default values for new columns
+UPDATE public.user_settings 
+SET theme_mode = 'system' 
+WHERE theme_mode IS NULL;
+
+UPDATE public.user_settings 
+SET security_settings = '{}' 
+WHERE security_settings IS NULL;
 
 -- =====================================================
 -- Setup complete! 

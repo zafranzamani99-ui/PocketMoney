@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   View,
   Text,
@@ -32,7 +32,7 @@ export default function BusinessProfileScreen() {
   const navigation = useNavigation<NavigationProp>()
   const [loading, setLoading] = useState(false)
   const [profile, setProfile] = useState<BusinessProfile>({
-    business_name: 'Ali\'s Warung',
+    business_name: '',
     business_type: 'Food & Beverage',
     phone: '',
     email: '',
@@ -88,6 +88,31 @@ export default function BusinessProfileScreen() {
       console.error('❌ Unexpected error loading profile:', error)
     }
   }
+
+  // Memoized input change handlers to prevent focus loss
+  const updateBusinessName = useCallback((text: string) => {
+    setProfile(prev => ({ ...prev, business_name: text }))
+  }, [])
+
+  const updateBusinessType = useCallback((type: string) => {
+    setProfile(prev => ({ ...prev, business_type: type }))
+  }, [])
+
+  const updatePhone = useCallback((text: string) => {
+    setProfile(prev => ({ ...prev, phone: text }))
+  }, [])
+
+  const updateEmail = useCallback((text: string) => {
+    setProfile(prev => ({ ...prev, email: text }))
+  }, [])
+
+  const updateAddress = useCallback((text: string) => {
+    setProfile(prev => ({ ...prev, address: text }))
+  }, [])
+
+  const updateWebsite = useCallback((text: string) => {
+    setProfile(prev => ({ ...prev, website: text }))
+  }, [])
 
   const saveProfile = async () => {
     if (!profile.business_name.trim()) {
@@ -225,7 +250,7 @@ export default function BusinessProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <LinearGradient
         colors={[Colors.primary, Colors.secondary]}
         style={styles.header}
@@ -258,9 +283,11 @@ export default function BusinessProfileScreen() {
               <TextInput
                 style={styles.input}
                 value={profile.business_name}
-                onChangeText={(text) => setProfile({...profile, business_name: text})}
+                onChangeText={updateBusinessName}
                 placeholder="Enter your business name"
                 placeholderTextColor={Colors.textSecondary}
+                returnKeyType="next"
+                blurOnSubmit={false}
               />
             </View>
 
@@ -274,7 +301,7 @@ export default function BusinessProfileScreen() {
                       styles.typeChip,
                       profile.business_type === type && styles.typeChipSelected
                     ]}
-                    onPress={() => setProfile({...profile, business_type: type})}
+                    onPress={() => updateBusinessType(type)}
                   >
                     <Text style={[
                       styles.typeChipText,
@@ -292,10 +319,12 @@ export default function BusinessProfileScreen() {
               <TextInput
                 style={styles.input}
                 value={profile.phone}
-                onChangeText={(text) => setProfile({...profile, phone: text})}
+                onChangeText={updatePhone}
                 placeholder="+60 12-345-6789"
                 placeholderTextColor={Colors.textSecondary}
                 keyboardType="phone-pad"
+                returnKeyType="next"
+                blurOnSubmit={false}
               />
             </View>
 
@@ -304,10 +333,13 @@ export default function BusinessProfileScreen() {
               <TextInput
                 style={styles.input}
                 value={profile.email}
-                onChangeText={(text) => setProfile({...profile, email: text})}
+                onChangeText={updateEmail}
                 placeholder="your@email.com"
                 placeholderTextColor={Colors.textSecondary}
                 keyboardType="email-address"
+                returnKeyType="next"
+                blurOnSubmit={false}
+                autoCapitalize="none"
               />
             </View>
 
@@ -316,12 +348,14 @@ export default function BusinessProfileScreen() {
               <TextInput
                 style={[styles.input, styles.textArea]}
                 value={profile.address}
-                onChangeText={(text) => setProfile({...profile, address: text})}
+                onChangeText={updateAddress}
                 placeholder="Enter your business address"
                 placeholderTextColor={Colors.textSecondary}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
+                returnKeyType="next"
+                blurOnSubmit={false}
               />
             </View>
 
@@ -330,10 +364,12 @@ export default function BusinessProfileScreen() {
               <TextInput
                 style={styles.input}
                 value={profile.website}
-                onChangeText={(text) => setProfile({...profile, website: text})}
+                onChangeText={updateWebsite}
                 placeholder="www.yourbusiness.com"
                 placeholderTextColor={Colors.textSecondary}
                 keyboardType="url"
+                returnKeyType="done"
+                autoCapitalize="none"
               />
             </View>
           </View>
@@ -427,13 +463,11 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.lg,
     borderBottomLeftRadius: BorderRadius.xl,
     borderBottomRightRadius: BorderRadius.xl,
-    paddingTop: Platform.OS === 'android' ? Spacing.xl : Spacing.lg,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Platform.OS === 'ios' ? Spacing.lg : Spacing.md,
     marginBottom: Spacing.lg,
   },
   backButton: {

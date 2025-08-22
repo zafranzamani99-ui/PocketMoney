@@ -1,14 +1,14 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   Alert,
   Platform,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
@@ -18,8 +18,110 @@ import { RateApp } from '../utils/rateApp'
 
 type NavigationProp = StackNavigationProp<RootStackParamList>
 
+interface User {
+  id: string
+  email: string
+  business_name: string | null
+  phone: string | null
+  business_type: string | null
+}
+
+interface UserStats {
+  transactionCount: number
+  daysActive: number
+  totalRevenue: number
+}
+
 export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp>()
+  const [user, setUser] = useState<User | null>(null)
+  const [userStats, setUserStats] = useState<UserStats>({
+    transactionCount: 0,
+    daysActive: 0,
+    totalRevenue: 0
+  })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadUserData()
+  }, [])
+
+  const loadUserData = async () => {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) return
+
+      // Load user profile
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single()
+
+      if (userError) throw userError
+      setUser(userData)
+
+      // Load user statistics
+      await loadUserStats(authUser.id)
+    } catch (error) {
+      console.error('Error loading user data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadUserStats = async (userId: string) => {
+    try {
+      // Get transaction count (expenses + orders)
+      const { data: expensesData } = await supabase
+        .from('expenses')
+        .select('id')
+        .eq('user_id', userId)
+
+      const { data: ordersData } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('user_id', userId)
+
+      const transactionCount = (expensesData?.length || 0) + (ordersData?.length || 0)
+
+      // Get total revenue from completed orders
+      const { data: revenueData } = await supabase
+        .from('orders')
+        .select('amount')
+        .eq('user_id', userId)
+        .neq('status', 'pending')
+
+      const totalRevenue = revenueData?.reduce((sum, order) => sum + order.amount, 0) || 0
+
+      // Calculate days active (from account creation to now)
+      const createdAt = new Date(user?.created_at || new Date())
+      const now = new Date()
+      const daysActive = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24))
+
+      setUserStats({
+        transactionCount,
+        daysActive: Math.max(1, daysActive), // At least 1 day
+        totalRevenue
+      })
+    } catch (error) {
+      console.error('Error loading user stats:', error)
+    }
+  }
+
+  const getUserInitial = () => {
+    if (user?.business_name) {
+      return user.business_name.charAt(0).toUpperCase()
+    }
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase()
+    }
+    return 'U'
+  }
+
+  const getUserDisplayName = () => {
+    return user?.business_name || user?.email?.split('@')[0] || 'User'
+  }
   const showAlert = (title: string, message: string, onConfirm?: () => void) => {
     if (Platform.OS === 'web') {
       const confirmed = window.confirm(`${title}\n\n${message}`)
@@ -128,9 +230,9 @@ export default function ProfileScreen() {
     {
       title: 'Business',
       items: [
-        { icon: '🏪', label: 'Business Profile', value: 'Ali\'s Warung' },
+        { icon: '🏪', label: 'Business Profile', value: user?.business_name || 'Not set' },
         { icon: '💰', label: 'Primary Wallet', value: 'Cash Wallet' },
-        { icon: '📊', label: 'Business Type', value: 'Food & Beverage' },
+        { icon: '📊', label: 'Business Type', value: user?.business_type || 'Not set' },
       ],
     },
     {
@@ -163,7 +265,7 @@ export default function ProfileScreen() {
   ]
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <Text style={styles.title}>Profile</Text>
       </View>
@@ -171,11 +273,11 @@ export default function ProfileScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.userCard}>
           <View style={styles.userAvatar}>
-            <Text style={styles.userInitial}>A</Text>
+            <Text style={styles.userInitial}>{loading ? '...' : getUserInitial()}</Text>
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>Ali Rahman</Text>
-            <Text style={styles.userEmail}>ali@warungtradisional.com</Text>
+            <Text style={styles.userName}>{loading ? 'Loading...' : getUserDisplayName()}</Text>
+            <Text style={styles.userEmail}>{loading ? 'Loading...' : (user?.email || 'No email')}</Text>
             <View style={styles.planBadge}>
               <Text style={styles.planText}>Free Plan</Text>
             </View>
@@ -184,15 +286,15 @@ export default function ProfileScreen() {
 
         <View style={styles.statsCards}>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>127</Text>
+            <Text style={styles.statValue}>{loading ? '...' : userStats.transactionCount.toString()}</Text>
             <Text style={styles.statLabel}>Transactions</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>15</Text>
+            <Text style={styles.statValue}>{loading ? '...' : userStats.daysActive.toString()}</Text>
             <Text style={styles.statLabel}>Days Active</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>RM 1,261</Text>
+            <Text style={styles.statValue}>{loading ? '...' : `RM ${userStats.totalRevenue.toFixed(0)}`}</Text>
             <Text style={styles.statLabel}>Total Revenue</Text>
           </View>
         </View>
@@ -258,12 +360,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    paddingTop: Platform.OS === 'ios' ? Spacing.md : Spacing.lg,
   },
   header: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    paddingTop: Platform.OS === 'android' ? Spacing.lg : Spacing.md,
   },
   title: {
     fontSize: Typography.fontSizes.heading,

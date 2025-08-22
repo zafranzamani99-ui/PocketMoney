@@ -162,7 +162,7 @@ export default function PrivacySecurityScreen() {
   ]
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <LinearGradient
         colors={[Colors.primary, Colors.secondary]}
         style={styles.header}
@@ -454,15 +454,11 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.lg,
     borderBottomLeftRadius: BorderRadius.xl,
     borderBottomRightRadius: BorderRadius.xl,
-    paddingTop: Platform.OS === 'android' ? Spacing.xl : Spacing.lg,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Platform.OS === 'ios' ? Spacing.lg : Spacing.md,
-    marginBottom: Spacing.lg,
-    marginTop: Spacing.md,
     marginBottom: Spacing.lg,
   },
   backButton: {

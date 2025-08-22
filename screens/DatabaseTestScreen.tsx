@@ -3,17 +3,18 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   Alert,
   Platform,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
 import { debugSupabase } from '../utils/debugSupabase'
+import { networkDiagnostics } from '../utils/networkDiagnostics'
 import { RootStackParamList } from '../navigation/AppNavigator'
 
 type NavigationProp = StackNavigationProp<RootStackParamList>
@@ -22,8 +23,37 @@ export default function DatabaseTestScreen() {
   const navigation = useNavigation<NavigationProp>()
   const [testResults, setTestResults] = useState<any>(null)
   const [testing, setTesting] = useState(false)
+  const [networkResults, setNetworkResults] = useState<any>(null)
 
-  const runTests = async () => {
+  const runNetworkTests = async () => {
+    setTesting(true)
+    try {
+      console.log('🌐 Starting network diagnostics...')
+      const { overall, results } = await networkDiagnostics.runFullDiagnostics()
+      setNetworkResults({ overall, results })
+      
+      if (!overall) {
+        // Show first error found
+        const firstError = Object.values(results).find((r: any) => !r.success) as any
+        if (firstError) {
+          Alert.alert(
+            '🔌 Network Issue Detected',
+            `${firstError.error}\n\nSuggestions:\n• ${firstError.suggestions?.slice(0, 2).join('\n• ')}`,
+            [{ text: 'OK' }]
+          )
+        }
+      } else {
+        Alert.alert('✅ Network OK', 'All network tests passed!')
+      }
+    } catch (error: any) {
+      console.error('❌ Network test failed:', error)
+      Alert.alert('Network Test Error', error.message)
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  const runDatabaseTests = async () => {
     setTesting(true)
     try {
       console.log('🧪 Starting database tests...')
@@ -32,14 +62,39 @@ export default function DatabaseTestScreen() {
       const envCheck = debugSupabase.checkEnvVars()
       console.log('Environment check:', envCheck)
       
+      if (!envCheck.hasUrl || !envCheck.hasKey) {
+        Alert.alert(
+          '❌ Environment Setup Required',
+          'Missing Supabase configuration in .env file.\n\nPlease add:\n• EXPO_PUBLIC_SUPABASE_URL\n• EXPO_PUBLIC_SUPABASE_ANON_KEY',
+          [{ text: 'OK' }]
+        )
+        return
+      }
+      
       // Run all tests
       const results = await debugSupabase.runAllTests()
       setTestResults(results)
       
+      // Analyze results
+      const issues = []
+      if (!results.connection.success) issues.push('Connection failed')
+      if (!results.auth.success) issues.push('Authentication failed')
+      if (!results.insert.success) issues.push('Database write failed')
+      
+      if (issues.length > 0) {
+        Alert.alert(
+          '❌ Database Issues Found',
+          `Problems detected:\n• ${issues.join('\n• ')}\n\nCheck the test results below for details.`,
+          [{ text: 'OK' }]
+        )
+      } else {
+        Alert.alert('✅ All Tests Passed', 'Database is working correctly!')
+      }
+      
       console.log('🏁 Tests completed')
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Test runner failed:', error)
-      Alert.alert('Error', 'Failed to run tests')
+      Alert.alert('Test Error', `Failed to run tests: ${error.message}`)
     } finally {
       setTesting(false)
     }
@@ -93,7 +148,7 @@ export default function DatabaseTestScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <LinearGradient
         colors={[Colors.primary, Colors.secondary]}
         style={styles.header}
@@ -104,12 +159,12 @@ export default function DatabaseTestScreen() {
           </TouchableOpacity>
           <Text style={styles.title}>Database Test</Text>
           <TouchableOpacity 
-            onPress={runTests} 
+            onPress={runDatabaseTests} 
             style={styles.testButton}
             disabled={testing}
           >
             <Text style={styles.testButtonText}>
-              {testing ? 'Testing...' : 'Run Tests'}
+              {testing ? 'Testing...' : 'Test DB'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -123,19 +178,43 @@ export default function DatabaseTestScreen() {
       </LinearGradient>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-        {!testResults && !testing && (
+        {!testResults && !networkResults && !testing && (
           <View style={styles.instructionsCard}>
-            <Text style={styles.instructionsTitle}>🧪 Database Test Tool</Text>
+            <Text style={styles.instructionsTitle}>🔧 Connection Diagnostics</Text>
             <Text style={styles.instructionsText}>
-              This tool will test your database connection, authentication, and table access.
-              Tap "Run Tests" to diagnose any database issues.
+              Having network issues? Use these tools to diagnose and fix connection problems.
             </Text>
+            
+            <TouchableOpacity
+              style={[styles.actionButton, styles.networkButton]}
+              onPress={runNetworkTests}
+              disabled={testing}
+            >
+              <Text style={styles.actionButtonIcon}>🌐</Text>
+              <View style={styles.actionButtonContent}>
+                <Text style={styles.actionButtonTitle}>Network Diagnostics</Text>
+                <Text style={styles.actionButtonDesc}>Test internet & Supabase connectivity</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionButton, styles.databaseButton]}
+              onPress={runDatabaseTests}
+              disabled={testing}
+            >
+              <Text style={styles.actionButtonIcon}>🗄️</Text>
+              <View style={styles.actionButtonContent}>
+                <Text style={styles.actionButtonTitle}>Database Tests</Text>
+                <Text style={styles.actionButtonDesc}>Test auth, tables & operations</Text>
+              </View>
+            </TouchableOpacity>
+            
             <View style={styles.checkList}>
-              <Text style={styles.checkItem}>✓ Environment variables</Text>
-              <Text style={styles.checkItem}>✓ Supabase connection</Text>
-              <Text style={styles.checkItem}>✓ User authentication</Text>
-              <Text style={styles.checkItem}>✓ Table access permissions</Text>
-              <Text style={styles.checkItem}>✓ Insert/update operations</Text>
+              <Text style={styles.checkItem}>• Environment variables check</Text>
+              <Text style={styles.checkItem}>• Internet connectivity test</Text>
+              <Text style={styles.checkItem}>• Supabase URL accessibility</Text>
+              <Text style={styles.checkItem}>• Authentication verification</Text>
+              <Text style={styles.checkItem}>• Database table access</Text>
             </View>
           </View>
         )}
@@ -149,9 +228,25 @@ export default function DatabaseTestScreen() {
           </View>
         )}
 
+        {networkResults && (
+          <View style={styles.resultsContainer}>
+            <Text style={styles.resultsTitle}>🌐 Network Diagnostic Results</Text>
+            <View style={[styles.overallResult, networkResults.overall ? styles.successCard : styles.errorCard]}>
+              <Text style={styles.overallStatus}>
+                {networkResults.overall ? '✅ All Network Tests Passed' : '❌ Network Issues Detected'}
+              </Text>
+            </View>
+            
+            {renderTestResult('Environment Variables', networkResults.results.environment)}
+            {renderTestResult('Internet Connection', networkResults.results.internet)}
+            {renderTestResult('Supabase URL Access', networkResults.results.supabaseUrl)}
+            {renderTestResult('Supabase Client', networkResults.results.supabaseClient)}
+          </View>
+        )}
+
         {testResults && (
           <View style={styles.resultsContainer}>
-            <Text style={styles.resultsTitle}>📊 Test Results</Text>
+            <Text style={styles.resultsTitle}>🗄️ Database Test Results</Text>
             
             {/* Connection Test */}
             {renderTestResult('Database Connection', testResults.connection)}
@@ -169,25 +264,18 @@ export default function DatabaseTestScreen() {
                 {renderTableResults(testResults.tables)}
               </View>
             )}
-            
-            <View style={styles.helpCard}>
-              <Text style={styles.helpTitle}>🔧 Troubleshooting</Text>
-              <Text style={styles.helpText}>
-                If tests are failing:
-              </Text>
-              <Text style={styles.helpItem}>
-                1. Check your .env file has correct Supabase credentials
-              </Text>
-              <Text style={styles.helpItem}>
-                2. Ensure you're logged in to the app
-              </Text>
-              <Text style={styles.helpItem}>
-                3. Run the complete_setup.sql script in Supabase
-              </Text>
-              <Text style={styles.helpItem}>
-                4. Check console logs for detailed error messages
-              </Text>
-            </View>
+          </View>
+        )}
+        
+        {(testResults || networkResults) && (
+          <View style={styles.helpCard}>
+            <Text style={styles.helpTitle}>🔧 Troubleshooting Guide</Text>
+            <Text style={styles.helpText}>Common solutions for connection issues:</Text>
+            <Text style={styles.helpItem}>• Check .env file has correct Supabase URL and key</Text>
+            <Text style={styles.helpItem}>• Verify internet connection (try switching WiFi/mobile)</Text>
+            <Text style={styles.helpItem}>• Ensure Supabase project is active in dashboard</Text>
+            <Text style={styles.helpItem}>• Run complete_setup.sql if tables are missing</Text>
+            <Text style={styles.helpItem}>• Restart app after changing .env file</Text>
           </View>
         )}
       </ScrollView>
@@ -205,13 +293,11 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.lg,
     borderBottomLeftRadius: BorderRadius.xl,
     borderBottomRightRadius: BorderRadius.xl,
-    paddingTop: Platform.OS === 'android' ? Spacing.xl : Spacing.lg,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Platform.OS === 'ios' ? Spacing.lg : Spacing.md,
     marginBottom: Spacing.lg,
   },
   backButton: {
@@ -419,5 +505,59 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily.regular,
     color: Colors.textSecondary,
     marginBottom: Spacing.xs,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+  },
+  networkButton: {
+    backgroundColor: Colors.primary + '20',
+    borderColor: Colors.primary + '40',
+  },
+  databaseButton: {
+    backgroundColor: Colors.secondary + '20',
+    borderColor: Colors.secondary + '40',
+  },
+  actionButtonIcon: {
+    fontSize: 24,
+    marginRight: Spacing.md,
+  },
+  actionButtonContent: {
+    flex: 1,
+  },
+  actionButtonTitle: {
+    fontSize: Typography.fontSizes.body,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.xs,
+  },
+  actionButtonDesc: {
+    fontSize: Typography.fontSizes.bodySmall,
+    fontFamily: Typography.fontFamily.regular,
+    color: Colors.textSecondary,
+  },
+  overallResult: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+  },
+  successCard: {
+    backgroundColor: Colors.success + '20',
+    borderColor: Colors.success,
+  },
+  errorCard: {
+    backgroundColor: Colors.error + '20',
+    borderColor: Colors.error,
+  },
+  overallStatus: {
+    fontSize: Typography.fontSizes.body,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.textPrimary,
+    textAlign: 'center',
   },
 })
