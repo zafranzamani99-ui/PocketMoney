@@ -11,7 +11,8 @@
       "Bash(npx tsc:*)",
       "Bash(grep:*)",
       "Bash(sed:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git pull:*)"
     ],
     "deny": [],
     "ask": []
