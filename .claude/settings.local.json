@@ -10,7 +10,8 @@
       "Bash(git push:*)",
       "Bash(npx tsc:*)",
       "Bash(grep:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
