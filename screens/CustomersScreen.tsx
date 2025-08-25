@@ -31,7 +31,7 @@ interface Customer {
 
 export default function CustomersScreen() {
   const navigation = useNavigation<NavigationProp>()
-  const { colors } = useTheme()
+  const { colors }: any = useTheme()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -261,7 +261,7 @@ export default function CustomersScreen() {
         <TextInput
           style={styles.searchInput}
           placeholder="Search by name or phone number..."
-          placeholderTextColor={colors.textSecondary || '#999'}
+          placeholderTextColor={colors.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -320,7 +320,7 @@ export default function CustomersScreen() {
             <TextInput
               style={styles.modalInput}
               placeholder="Customer Name"
-              placeholderTextColor={colors.textSecondary || '#999'}
+              placeholderTextColor={colors.textSecondary}
               value={newCustomerName}
               onChangeText={setNewCustomerName}
             />
@@ -328,7 +328,7 @@ export default function CustomersScreen() {
             <TextInput
               style={styles.modalInput}
               placeholder="Phone Number (Optional)"
-              placeholderTextColor={colors.textSecondary || '#999'}
+              placeholderTextColor={colors.textSecondary}
               value={newCustomerPhone}
               onChangeText={setNewCustomerPhone}
               keyboardType="phone-pad"
