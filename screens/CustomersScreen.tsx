@@ -261,7 +261,7 @@ export default function CustomersScreen() {
         <TextInput
           style={styles.searchInput}
           placeholder="Search by name or phone number..."
-          placeholderTextColor={colors.textSecondary}
+          placeholderTextColor={colors.textSecondary || '#999'}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -320,7 +320,7 @@ export default function CustomersScreen() {
             <TextInput
               style={styles.modalInput}
               placeholder="Customer Name"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={colors.textSecondary || '#999'}
               value={newCustomerName}
               onChangeText={setNewCustomerName}
             />
@@ -328,7 +328,7 @@ export default function CustomersScreen() {
             <TextInput
               style={styles.modalInput}
               placeholder="Phone Number (Optional)"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={colors.textSecondary || '#999'}
               value={newCustomerPhone}
               onChangeText={setNewCustomerPhone}
               keyboardType="phone-pad"

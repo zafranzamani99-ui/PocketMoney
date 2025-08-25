@@ -574,9 +574,6 @@ const createStyles = (colors: any) => StyleSheet.create({
     color: colors.light,
   },
   // Cart styles
-  cartHeader: {
-    marginBottom: Spacing.sm,
-  },
   cartTitle: {
     fontSize: isTablet ? Typography.fontSizes.body : Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
