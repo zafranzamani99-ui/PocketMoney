@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   Alert,
   Platform,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -224,7 +224,7 @@ export default function LanguageSelectionScreen() {
   const styles = createStyles(colors)
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <LinearGradient
         colors={[colors.primary, colors.secondary]}
         style={styles.header}
@@ -245,7 +245,12 @@ export default function LanguageSelectionScreen() {
         </View>
       </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false} 
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🌟 Featured Languages</Text>
           <Text style={styles.sectionDescription}>
@@ -488,19 +493,17 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   header: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.lg, // Reduced padding - SafeAreaView handles notch/Dynamic Island
+    paddingBottom: Spacing.md,
     borderBottomLeftRadius: BorderRadius.xl,
     borderBottomRightRadius: BorderRadius.xl,
-    paddingTop: Platform.OS === 'android' ? Spacing.xl : Spacing.lg,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Platform.OS === 'ios' ? Spacing.lg : Spacing.md,
-    marginBottom: Spacing.lg,
-    marginTop: Spacing.md,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
+    marginTop: Spacing.xl,
   },
   backButton: {
     width: 40,
@@ -511,7 +514,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     alignItems: 'center',
   },
   backIcon: {
-    fontSize: 24,
+    fontSize: 30,
     color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
@@ -541,6 +544,9 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: Platform.OS === 'ios' ? 34 : 0, // Space for home indicator
   },
   section: {
     paddingHorizontal: Spacing.lg,

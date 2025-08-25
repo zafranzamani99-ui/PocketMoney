@@ -187,7 +187,7 @@ export default function WalletManagementModal({ visible, onClose, onWalletChange
   const styles = createStyles(colors)
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+    <Modal visible={visible} animationType="slide">
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose}>

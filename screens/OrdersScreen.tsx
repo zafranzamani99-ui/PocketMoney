@@ -68,16 +68,17 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   header: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    paddingTop: Spacing.xxl,
-    borderBottomLeftRadius: BorderRadius.lg,
-    borderBottomRightRadius: BorderRadius.lg,
+    paddingTop: Spacing.lg, // Reduced padding - SafeAreaView handles notch/Dynamic Island
+    paddingBottom: Spacing.md,
+    borderBottomLeftRadius: BorderRadius.xl,
+    borderBottomRightRadius: BorderRadius.xl,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
+    marginTop: Spacing.lg, // Push title down
   },
   title: {
     fontSize: Typography.fontSizes.display,
@@ -497,7 +498,7 @@ export default function OrdersScreen() {
   const styles = createStyles(colors)
 
   return (
-    <SafeAreaView style={styles.container} edges={isTablet ? ['top'] : ['bottom']}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={[styles.mainContainer, isTablet && styles.tabletContainer]}>
         <LinearGradient
           colors={[colors.primary, colors.secondary]}

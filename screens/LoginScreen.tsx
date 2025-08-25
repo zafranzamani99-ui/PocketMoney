@@ -57,7 +57,7 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToSignUp }: Logi
   const styles = createStyles(colors)
 
   return (
-    <SafeAreaView style={styles.container} edges={isTablet ? ['top'] : ['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={[styles.wrapper, isTablet && styles.tabletWrapper]}>
         <KeyboardAvoidingView 
           style={styles.keyboardContainer}

@@ -254,7 +254,7 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
   const styles = createStyles(colors)
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" transparent>
+    <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.overlay}>
         {/* Backdrop to close when tapping outside */}
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />

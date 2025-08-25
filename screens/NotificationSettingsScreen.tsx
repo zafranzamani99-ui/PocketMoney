@@ -3,13 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   Switch,
   Alert,
   Platform,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -58,20 +58,9 @@ export default function NotificationSettingsScreen() {
 
   const loadSettings = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data, error } = await supabase
-        .from('user_settings')
-        .select('notification_settings')
-        .eq('user_id', user.id)
-        .single()
-
-      if (error && error.code !== 'PGRST116') throw error
-      
-      if (data?.notification_settings) {
-        setSettings({ ...settings, ...data.notification_settings })
-      }
+      // For now, just use local state - database column doesn't exist yet
+      // TODO: Add notification_settings column to user_settings table
+      console.log('Loading notification settings from local state')
     } catch (error) {
       console.error('Error loading notification settings:', error)
     }
@@ -79,18 +68,9 @@ export default function NotificationSettingsScreen() {
 
   const saveSettings = async (newSettings: NotificationSettings) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { error } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          notification_settings: newSettings,
-          updated_at: new Date().toISOString(),
-        })
-
-      if (error) throw error
+      // For now, just use local state - database column doesn't exist yet
+      // TODO: Add notification_settings column to user_settings table
+      console.log('Saving notification settings to local state:', newSettings)
     } catch (error) {
       console.error('Error saving notification settings:', error)
       Alert.alert('Error', 'Failed to save settings')
@@ -103,13 +83,6 @@ export default function NotificationSettingsScreen() {
     await saveSettings(newSettings)
   }
 
-  const testNotification = () => {
-    Alert.alert(
-      'Test Notification',
-      'This is how your notifications will look! 📱',
-      [{ text: 'OK' }]
-    )
-  }
 
   const notificationCategories = [
     {
@@ -183,7 +156,7 @@ export default function NotificationSettingsScreen() {
   const styles = createStyles(colors)
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <LinearGradient
         colors={[colors.primary, colors.secondary]}
         style={styles.header}
@@ -193,9 +166,7 @@ export default function NotificationSettingsScreen() {
             <Text style={styles.backIcon}>‹</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Notifications</Text>
-          <TouchableOpacity onPress={testNotification} style={styles.testButton}>
-            <Text style={styles.testText}>Test</Text>
-          </TouchableOpacity>
+          <View style={styles.placeholder} />
         </View>
         
         <View style={styles.headerInfo}>
@@ -206,8 +177,15 @@ export default function NotificationSettingsScreen() {
         </View>
       </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false} 
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Master Control</Text>
+          
           <View style={styles.masterToggle}>
             <View style={styles.masterToggleInfo}>
               <Text style={styles.masterToggleTitle}>Push Notifications</Text>
@@ -228,20 +206,19 @@ export default function NotificationSettingsScreen() {
           <>
             {notificationCategories.map((category, categoryIndex) => (
               <View key={categoryIndex} style={styles.section}>
-                <View style={styles.categoryHeader}>
-                  <Text style={styles.categoryIcon}>{category.icon}</Text>
-                  <Text style={styles.categoryTitle}>{category.title}</Text>
-                </View>
+                <Text style={styles.sectionTitle}>
+                  {category.icon} {category.title}
+                </Text>
 
-                <View style={styles.settingsCard}>
+                <View style={styles.notificationCard}>
                   {category.settings.map((setting, settingIndex) => (
                     <View key={settingIndex} style={[
-                      styles.settingItem,
-                      settingIndex === category.settings.length - 1 && styles.settingItemLast
+                      styles.notificationOption,
+                      settingIndex === category.settings.length - 1 && styles.notificationOptionLast
                     ]}>
-                      <View style={styles.settingInfo}>
-                        <Text style={styles.settingTitle}>{setting.title}</Text>
-                        <Text style={styles.settingDescription}>
+                      <View style={styles.notificationInfo}>
+                        <Text style={styles.notificationTitle}>{setting.title}</Text>
+                        <Text style={styles.notificationDescription}>
                           {setting.description}
                         </Text>
                       </View>
@@ -258,16 +235,13 @@ export default function NotificationSettingsScreen() {
             ))}
 
             <View style={styles.section}>
-              <View style={styles.categoryHeader}>
-                <Text style={styles.categoryIcon}>🌙</Text>
-                <Text style={styles.categoryTitle}>Quiet Hours</Text>
-              </View>
+              <Text style={styles.sectionTitle}>🌙 Quiet Hours</Text>
 
-              <View style={styles.settingsCard}>
-                <View style={styles.settingItem}>
-                  <View style={styles.settingInfo}>
-                    <Text style={styles.settingTitle}>Do Not Disturb</Text>
-                    <Text style={styles.settingDescription}>
+              <View style={styles.notificationCard}>
+                <View style={styles.notificationOption}>
+                  <View style={styles.notificationInfo}>
+                    <Text style={styles.notificationTitle}>Do Not Disturb</Text>
+                    <Text style={styles.notificationDescription}>
                       Silence notifications during specific hours
                     </Text>
                   </View>
@@ -307,13 +281,23 @@ export default function NotificationSettingsScreen() {
         )}
 
         <View style={styles.section}>
-          <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>📱 Notification Tips</Text>
+          <Text style={styles.sectionTitle}>Tips & Best Practices</Text>
+          
+          <View style={styles.tipsCard}>
+            <Text style={styles.tipsTitle}>📱 Notification Tips</Text>
+            
             <View style={styles.tipsList}>
-              <Text style={styles.tip}>• Enable order alerts to never miss a sale</Text>
-              <Text style={styles.tip}>• Daily summaries help track your progress</Text>
-              <Text style={styles.tip}>• Use quiet hours for better work-life balance</Text>
-              <Text style={styles.tip}>• Expense reminders help maintain good habits</Text>
+              {[
+                'Enable order alerts to never miss a sale',
+                'Daily summaries help track your progress',
+                'Use quiet hours for better work-life balance',
+                'Expense reminders help maintain good habits'
+              ].map((tip, index) => (
+                <View key={index} style={styles.tipItem}>
+                  <Text style={styles.tipIcon}>✨</Text>
+                  <Text style={styles.tipText}>{tip}</Text>
+                </View>
+              ))}
             </View>
           </View>
         </View>
@@ -365,17 +349,17 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   header: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.lg, // Reduced padding - SafeAreaView handles notch/Dynamic Island  
+    paddingBottom: Spacing.md,
     borderBottomLeftRadius: BorderRadius.xl,
     borderBottomRightRadius: BorderRadius.xl,
-    paddingTop: Platform.OS === 'android' ? Spacing.xl : Spacing.lg,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Platform.OS === 'ios' ? Spacing.lg : Spacing.md,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
+    marginTop: Spacing.lg,
   },
   backButton: {
     width: 40,
@@ -384,9 +368,10 @@ const createStyles = (colors: any) => StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 8,
   },
   backIcon: {
-    fontSize: 24,
+    fontSize: 30,
     color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
@@ -395,16 +380,8 @@ const createStyles = (colors: any) => StyleSheet.create({
     fontFamily: Typography.fontFamily.bold,
     color: colors.textPrimary,
   },
-  testButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.sm,
-  },
-  testText: {
-    fontSize: Typography.fontSizes.body,
-    fontFamily: Typography.fontFamily.medium,
-    color: colors.textPrimary,
+  placeholder: {
+    width: 40,
   },
   headerInfo: {
     alignItems: 'center',
@@ -425,9 +402,18 @@ const createStyles = (colors: any) => StyleSheet.create({
   content: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: Platform.OS === 'ios' ? 34 : 0, // Space for home indicator
+  },
   section: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: Typography.fontSizes.subheading,
+    fontFamily: Typography.fontFamily.bold,
+    color: colors.textPrimary,
+    marginBottom: Spacing.lg,
   },
   masterToggle: {
     backgroundColor: colors.surface,
@@ -453,29 +439,16 @@ const createStyles = (colors: any) => StyleSheet.create({
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
     color: colors.textSecondary,
+    lineHeight: Typography.lineHeights.body,
   },
-  categoryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  categoryIcon: {
-    fontSize: 20,
-    marginRight: Spacing.sm,
-  },
-  categoryTitle: {
-    fontSize: Typography.fontSizes.subheading,
-    fontFamily: Typography.fontFamily.bold,
-    color: colors.textPrimary,
-  },
-  settingsCard: {
+  notificationCard: {
     backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: colors.border,
     overflow: 'hidden',
   },
-  settingItem: {
+  notificationOption: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -483,20 +456,20 @@ const createStyles = (colors: any) => StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  settingItemLast: {
+  notificationOptionLast: {
     borderBottomWidth: 0,
   },
-  settingInfo: {
+  notificationInfo: {
     flex: 1,
     marginRight: Spacing.md,
   },
-  settingTitle: {
+  notificationTitle: {
     fontSize: Typography.fontSizes.body,
-    fontFamily: Typography.fontFamily.medium,
+    fontFamily: Typography.fontFamily.bold,
     color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
-  settingDescription: {
+  notificationDescription: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
     color: colors.textSecondary,
@@ -531,14 +504,14 @@ const createStyles = (colors: any) => StyleSheet.create({
     fontFamily: Typography.fontFamily.medium,
     color: colors.textPrimary,
   },
-  infoCard: {
+  tipsCard: {
     backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  infoTitle: {
+  tipsTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
     color: colors.textPrimary,
@@ -547,7 +520,17 @@ const createStyles = (colors: any) => StyleSheet.create({
   tipsList: {
     gap: Spacing.sm,
   },
-  tip: {
+  tipItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  tipIcon: {
+    fontSize: 16,
+    marginRight: Spacing.sm,
+    marginTop: 2,
+  },
+  tipText: {
+    flex: 1,
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
     color: colors.textSecondary,

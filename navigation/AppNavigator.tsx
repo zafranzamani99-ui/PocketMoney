@@ -7,7 +7,6 @@ import SplashScreen from '../screens/SplashScreen'
 import LoginScreen from '../screens/LoginScreen'
 import SignUpScreen from '../screens/SignUpScreen'
 import MainTabNavigator from './MainTabNavigator'
-import TransactionDetailScreen from '../screens/TransactionDetailScreen'
 import OrderDetailScreen from '../screens/OrderDetailScreen'
 import BusinessProfileScreen from '../screens/BusinessProfileScreen'
 import WalletManagementScreen from '../screens/WalletManagementScreen'
@@ -31,21 +30,6 @@ export type RootStackParamList = {
   Login: undefined
   SignUp: undefined
   Main: undefined
-  TransactionDetail: {
-    transaction: {
-      id: string
-      type: 'income' | 'expense'
-      description: string
-      amount: number
-      category: string
-      date: string
-      time: string
-      receipt_url?: string
-      payment_method?: string
-      customer?: string
-      notes?: string
-    }
-  }
   OrderDetail: {
     order: {
       id: string
@@ -107,7 +91,6 @@ export default function AppNavigator() {
         {session ? (
           <>
             <Stack.Screen name="Main" component={MainTabNavigator} />
-            <Stack.Screen name="TransactionDetail" component={TransactionDetailScreen} />
             <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
             <Stack.Screen name="BusinessProfile" component={BusinessProfileScreen} />
             <Stack.Screen name="WalletManagement" component={WalletManagementScreen} />

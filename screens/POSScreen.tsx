@@ -575,7 +575,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   // Cart styles
   cartTitle: {
-    fontSize: isTablet ? Typography.fontSizes.body : Typography.fontSizes.subheading,
+    fontSize: isTablet ? Typography.fontSizes.subheading : Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
     color: colors.textPrimary,
   },
@@ -724,14 +724,19 @@ const createStyles = (colors: any) => StyleSheet.create({
     color: colors.light,
   },
   cartSummary: {
-    backgroundColor: colors.primary + '10',
+    backgroundColor: colors.primary + '25',
     borderRadius: BorderRadius.md,
-    padding: Spacing.sm,
+    padding: Spacing.md,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.primary + '30',
+    borderWidth: 2,
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   viewCartBtn: {
     backgroundColor: colors.primary,
@@ -740,9 +745,10 @@ const createStyles = (colors: any) => StyleSheet.create({
     borderRadius: BorderRadius.sm,
   },
   viewCartText: {
-    fontSize: Typography.fontSizes.caption,
-    fontFamily: Typography.fontFamily.semiBold,
+    fontSize: Typography.fontSizes.body,
+    fontFamily: Typography.fontFamily.bold,
     color: colors.primary,
+    letterSpacing: 0.5,
   },
   fullScreenCart: {
     position: 'absolute',

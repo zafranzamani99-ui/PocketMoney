@@ -18,7 +18,15 @@
       "Bash(npx tsc:*)",
       "Bash(mv:*)",
       "Bash(grep:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Read(/c:\\Users\\N6748\\OneDrive - medexoneglobal.com\\Pictures\\New folder/**)",
+      "Read(/c:\\Users\\N6748\\OneDrive - medexoneglobal.com\\Pictures\\New folder/**)",
+      "Read(/c:\\Users\\N6748\\OneDrive - medexoneglobal.com\\Pictures\\New folder/**)",
+      "Read(/c:\\Users\\N6748\\OneDrive - medexoneglobal.com\\Pictures\\New folder/**)",
+      "Read(/c:\\Users\\N6748\\OneDrive - medexoneglobal.com\\Pictures\\New folder/**)",
+      "Read(/c:\\Users\\N6748\\OneDrive - medexoneglobal.com\\Pictures\\New folder/**)",
+      "Read(/c:\\Users\\N6748\\OneDrive - medexoneglobal.com\\Pictures\\New folder/**)",
+      "Read(/c:\\Users\\N6748\\OneDrive - medexoneglobal.com\\Pictures\\New folder/**)"
     ],
     "deny": [],
     "ask": [],

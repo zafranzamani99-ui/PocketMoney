@@ -89,7 +89,7 @@ export default function DarkModeSettingsScreen() {
   const styles = createStyles(colors)
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <LinearGradient
         colors={[colors.primary, colors.secondary]}
         style={styles.header}
@@ -110,7 +110,12 @@ export default function DarkModeSettingsScreen() {
         </View>
       </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false} 
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Choose Your Theme</Text>
           
@@ -243,7 +248,7 @@ export default function DarkModeSettingsScreen() {
           </View>
         </View>
 
-        <View style={styles.section}>
+        <View style={[styles.section, styles.lastSection]}>
           <TouchableOpacity
             style={styles.resetButton}
             onPress={() => {
@@ -275,8 +280,8 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   header: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xxl + Spacing.lg, // Extra padding for notch
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.lg, // Reduced padding - SafeAreaView handles notch/Dynamic Island
+    paddingBottom: Spacing.md,
     borderBottomLeftRadius: BorderRadius.xl,
     borderBottomRightRadius: BorderRadius.xl,
   },
@@ -284,7 +289,8 @@ const createStyles = (colors: any) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
+    marginTop: Spacing.lg,
   },
   backButton: {
     width: 40,
@@ -293,9 +299,10 @@ const createStyles = (colors: any) => StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 8,
   },
   backIcon: {
-    fontSize: 24,
+    fontSize: 30,
     color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
@@ -326,9 +333,15 @@ const createStyles = (colors: any) => StyleSheet.create({
   content: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: Platform.OS === 'ios' ? 34 : 0, // Space for home indicator
+  },
   section: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.lg,
+  },
+  lastSection: {
+    paddingBottom: 0, // Remove bottom padding from last section
   },
   sectionTitle: {
     fontSize: Typography.fontSizes.subheading,

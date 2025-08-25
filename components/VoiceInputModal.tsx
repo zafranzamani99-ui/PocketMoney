@@ -152,7 +152,7 @@ export default function VoiceInputModal({ visible, onClose, onResult }: VoiceInp
   const styles = createStyles(colors)
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+    <Modal visible={visible} animationType="slide">
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose}>

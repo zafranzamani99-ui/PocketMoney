@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   Dimensions,
@@ -11,6 +10,7 @@ import {
   Alert,
   Share,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
 import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
@@ -345,7 +345,7 @@ Generated with PocketMoney
   const styles = createStyles(colors)
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.header}>
         <Text style={styles.title}>Analytics 📊</Text>
         <View style={styles.headerRight}>
@@ -543,17 +543,17 @@ const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: Platform.OS === 'ios' ? Spacing.md : Spacing.lg,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    paddingTop: Platform.OS === 'android' ? Spacing.lg : Spacing.md,
+    paddingTop: Spacing.lg, // Standardized padding for SafeAreaView
+    paddingBottom: Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    marginTop: Spacing.lg, // Push title down for proper spacing
   },
   headerRight: {
     flexDirection: 'row',

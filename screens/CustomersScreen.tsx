@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   FlatList,
   TextInput,
@@ -11,6 +10,7 @@ import {
   Linking,
   Modal,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
 import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
@@ -243,7 +243,7 @@ export default function CustomersScreen() {
   const styles = createStyles(colors)
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -373,14 +373,15 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   header: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    paddingTop: Spacing.xxl + Spacing.md,
+    paddingTop: Spacing.lg, // Standardized padding for SafeAreaView
+    paddingBottom: Spacing.md,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing.sm,
+    marginTop: Spacing.lg, // Push title down for proper spacing
   },
   backButton: {
     width: 40,
