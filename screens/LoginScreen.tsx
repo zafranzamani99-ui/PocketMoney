@@ -8,9 +8,14 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+
+const { width: screenWidth } = Dimensions.get('window')
+const isTablet = screenWidth >= 768
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
 
 interface LoginScreenProps {
@@ -19,6 +24,7 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ onLoginSuccess, onNavigateToSignUp }: LoginScreenProps) {
+  const { colors } = useTheme()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -48,12 +54,15 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToSignUp }: Logi
     }
   }
 
+  const styles = createStyles(colors)
+
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView 
-        style={styles.keyboardContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+    <SafeAreaView style={styles.container} edges={isTablet ? ['top'] : ['top', 'bottom']}>
+      <View style={[styles.wrapper, isTablet && styles.tabletWrapper]}>
+        <KeyboardAvoidingView 
+          style={styles.keyboardContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.logo}>💰</Text>
@@ -69,7 +78,7 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToSignUp }: Logi
               value={email}
               onChangeText={setEmail}
               placeholder="Enter your email"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
@@ -83,7 +92,7 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToSignUp }: Logi
               value={password}
               onChangeText={setPassword}
               placeholder="Enter your password"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               secureTextEntry
             />
           </View>
@@ -106,14 +115,24 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToSignUp }: Logi
         </View>
       </View>
       </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
+    width: '100%',
+  },
+  wrapper: {
+    flex: 1,
+  },
+  tabletWrapper: {
+    maxWidth: 600,
+    alignSelf: 'center',
+    width: '95%',
   },
   keyboardContainer: {
     flex: 1,
@@ -134,13 +153,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   subtitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   form: {
@@ -152,20 +171,20 @@ const styles = StyleSheet.create({
   label: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   button: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
@@ -177,16 +196,16 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   linkText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: Spacing.md,
   },
   linkTextHighlight: {
-    color: Colors.primary,
+    color: colors.primary,
     fontFamily: Typography.fontFamily.medium,
   },
 })

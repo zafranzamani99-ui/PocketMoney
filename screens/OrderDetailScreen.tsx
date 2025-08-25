@@ -13,7 +13,8 @@ import {
   Platform,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
 
 interface Order {
@@ -48,6 +49,7 @@ interface OrderDetailProps {
 export default function OrderDetailScreen({ route, navigation }: OrderDetailProps) {
   const { order: initialOrder } = route.params
   const [order, setOrder] = useState(initialOrder)
+  const { colors } = useTheme()
   const [showEditModal, setShowEditModal] = useState(false)
   const [showItemModal, setShowItemModal] = useState(false)
   const [editingItem, setEditingItem] = useState<any>(null)
@@ -90,10 +92,10 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailProp
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
-      case 'pending': return Colors.accent
-      case 'paid': return Colors.primary
-      case 'completed': return Colors.success
-      default: return Colors.textSecondary
+      case 'pending': return colors.accent
+      case 'paid': return colors.primary
+      case 'completed': return colors.success
+      default: return colors.textSecondary
     }
   }
 
@@ -352,6 +354,7 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailProp
   }
 
   const { date, time } = formatDate(order.created_at)
+  const styles = createStyles(colors)
 
   // Create a scrollable container that works on all platforms
   const ScrollableContainer = ({ children }: { children: React.ReactNode }) => {
@@ -533,11 +536,11 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailProp
           <View style={styles.statusButtons}>
             {order.status !== 'pending' && (
               <TouchableOpacity
-                style={[styles.statusButton, { backgroundColor: Colors.accent + '20', borderColor: Colors.accent + '40' }]}
+                style={[styles.statusButton, { backgroundColor: colors.accent + '20', borderColor: colors.accent + '40' }]}
                 onPress={() => handleStatusUpdate('pending')}
               >
                 <Text style={styles.statusButtonEmoji}>⏳</Text>
-                <Text style={[styles.statusButtonText, { color: Colors.accent }]}>
+                <Text style={[styles.statusButtonText, { color: colors.accent }]}>
                   Mark Pending
                 </Text>
               </TouchableOpacity>
@@ -545,11 +548,11 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailProp
 
             {order.status === 'pending' && (
               <TouchableOpacity
-                style={[styles.statusButton, { backgroundColor: Colors.primary + '20', borderColor: Colors.primary + '40' }]}
+                style={[styles.statusButton, { backgroundColor: colors.primary + '20', borderColor: colors.primary + '40' }]}
                 onPress={() => handleStatusUpdate('paid')}
               >
                 <Text style={styles.statusButtonEmoji}>💰</Text>
-                <Text style={[styles.statusButtonText, { color: Colors.primary }]}>
+                <Text style={[styles.statusButtonText, { color: colors.primary }]}>
                   Mark Paid
                 </Text>
               </TouchableOpacity>
@@ -557,11 +560,11 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailProp
 
             {order.status === 'paid' && (
               <TouchableOpacity
-                style={[styles.statusButton, { backgroundColor: Colors.success + '20', borderColor: Colors.success + '40' }]}
+                style={[styles.statusButton, { backgroundColor: colors.success + '20', borderColor: colors.success + '40' }]}
                 onPress={() => handleStatusUpdate('completed')}
               >
                 <Text style={styles.statusButtonEmoji}>✅</Text>
-                <Text style={[styles.statusButtonText, { color: Colors.success }]}>
+                <Text style={[styles.statusButtonText, { color: colors.success }]}>
                   Mark Completed
                 </Text>
               </TouchableOpacity>
@@ -603,7 +606,7 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailProp
             <TextInput
               style={[styles.modalInput, styles.textArea]}
               placeholder="Order notes..."
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               value={editOrder.notes}
               onChangeText={(text) => setEditOrder({...editOrder, notes: text})}
               multiline
@@ -643,7 +646,7 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailProp
             <TextInput
               style={styles.modalInput}
               placeholder="Item Name *"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               value={newItem.name}
               onChangeText={(text) => setNewItem({...newItem, name: text})}
             />
@@ -651,7 +654,7 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailProp
             <TextInput
               style={styles.modalInput}
               placeholder="Price (RM) *"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               value={newItem.price}
               onChangeText={(text) => setNewItem({...newItem, price: text})}
               keyboardType="numeric"
@@ -660,7 +663,7 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailProp
             <TextInput
               style={styles.modalInput}
               placeholder="Quantity"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               value={newItem.quantity}
               onChangeText={(text) => setNewItem({...newItem, quantity: text})}
               keyboardType="numeric"
@@ -704,10 +707,10 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailProp
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     paddingTop: Platform.OS === 'ios' ? Spacing.md : Spacing.lg,
   },
   header: {
@@ -718,28 +721,28 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     paddingTop: Platform.OS === 'android' ? Spacing.lg : Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
   backIcon: {
     fontSize: 24,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   title: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   editButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
@@ -747,7 +750,7 @@ const styles = StyleSheet.create({
   editButtonText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   content: {
     flex: 1,
@@ -758,7 +761,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   orderEmoji: {
     fontSize: 48,
@@ -772,21 +775,21 @@ const styles = StyleSheet.create({
   orderAmount: {
     fontSize: Typography.fontSizes.display,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   detailsCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   sectionTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.lg,
   },
   detailRow: {
@@ -799,24 +802,24 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     flex: 1,
   },
   detailValue: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     flex: 2,
     textAlign: 'right',
   },
   itemsCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   itemsHeader: {
     flexDirection: 'row',
@@ -825,7 +828,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   addItemButton: {
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
@@ -833,7 +836,7 @@ const styles = StyleSheet.create({
   addItemText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   itemRow: {
     flexDirection: 'row',
@@ -841,7 +844,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   itemInfo: {
     flex: 1,
@@ -849,27 +852,27 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   itemDetails: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   itemTotal: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.success,
+    color: colors.success,
   },
   customerCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   customerInfo: {
     flexDirection: 'row',
@@ -880,7 +883,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: Spacing.md,
@@ -888,7 +891,7 @@ const styles = StyleSheet.create({
   customerInitial: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   customerDetails: {
     flex: 1,
@@ -896,19 +899,19 @@ const styles = StyleSheet.create({
   customerName: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   customerPhone: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.xs,
   },
   customerEmail: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   customerActions: {
     flexDirection: 'row',
@@ -919,7 +922,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: colors.surfaceElevated,
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
   },
@@ -930,16 +933,16 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   statusActions: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.xl,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   statusButtons: {
     gap: Spacing.md,
@@ -967,7 +970,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   modalContent: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     maxHeight: '80%',
@@ -975,26 +978,26 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
   inputLabel: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
     marginTop: Spacing.md,
   },
   modalInput: {
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: colors.surfaceElevated,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     marginBottom: Spacing.md,
   },
   textArea: {
@@ -1010,16 +1013,16 @@ const styles = StyleSheet.create({
   paymentMethod: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: colors.surfaceElevated,
     borderRadius: BorderRadius.md,
     padding: Spacing.sm,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   paymentMethodActive: {
-    backgroundColor: Colors.primary + '20',
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary + '20',
+    borderColor: colors.primary,
   },
   paymentMethodIcon: {
     fontSize: 20,
@@ -1028,10 +1031,10 @@ const styles = StyleSheet.create({
   paymentMethodText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   paymentMethodTextActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   modalActions: {
     flexDirection: 'row',
@@ -1045,29 +1048,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   saveButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   deleteButton: {
-    backgroundColor: Colors.error,
+    backgroundColor: colors.error,
   },
   cancelButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   saveButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   deleteButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
 })

@@ -13,7 +13,8 @@ import {
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
 import { RootStackParamList } from '../navigation/AppNavigator'
 
@@ -33,6 +34,7 @@ interface SecuritySettings {
 
 export default function PrivacySecurityScreen() {
   const navigation = useNavigation<NavigationProp>()
+  const { colors } = useTheme()
   const [loading, setLoading] = useState(false)
   const [settings, setSettings] = useState<SecuritySettings>({
     biometric_enabled: true,
@@ -161,10 +163,12 @@ export default function PrivacySecurityScreen() {
     { value: 0, label: 'Never' },
   ]
 
+  const styles = createStyles(colors)
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <LinearGradient
-        colors={[Colors.primary, Colors.secondary]}
+        colors={[colors.primary, colors.secondary]}
         style={styles.header}
       >
         <View style={styles.headerTop}>
@@ -201,8 +205,8 @@ export default function PrivacySecurityScreen() {
               <Switch
                 value={settings.biometric_enabled}
                 onValueChange={(value) => updateSetting('biometric_enabled', value)}
-                trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                thumbColor={settings.biometric_enabled ? Colors.primary : Colors.textSecondary}
+                trackColor={{ false: colors.border, true: colors.primary + '50' }}
+                thumbColor={settings.biometric_enabled ? colors.primary : colors.textSecondary}
               />
             </View>
 
@@ -244,8 +248,8 @@ export default function PrivacySecurityScreen() {
               <Switch
                 value={settings.require_auth_for_reports}
                 onValueChange={(value) => updateSetting('require_auth_for_reports', value)}
-                trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                thumbColor={settings.require_auth_for_reports ? Colors.primary : Colors.textSecondary}
+                trackColor={{ false: colors.border, true: colors.primary + '50' }}
+                thumbColor={settings.require_auth_for_reports ? colors.primary : colors.textSecondary}
               />
             </View>
 
@@ -259,8 +263,8 @@ export default function PrivacySecurityScreen() {
               <Switch
                 value={settings.require_auth_for_settings}
                 onValueChange={(value) => updateSetting('require_auth_for_settings', value)}
-                trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                thumbColor={settings.require_auth_for_settings ? Colors.primary : Colors.textSecondary}
+                trackColor={{ false: colors.border, true: colors.primary + '50' }}
+                thumbColor={settings.require_auth_for_settings ? colors.primary : colors.textSecondary}
               />
             </View>
           </View>
@@ -305,8 +309,8 @@ export default function PrivacySecurityScreen() {
               <Switch
                 value={settings.analytics_sharing}
                 onValueChange={(value) => updateSetting('analytics_sharing', value)}
-                trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                thumbColor={settings.analytics_sharing ? Colors.primary : Colors.textSecondary}
+                trackColor={{ false: colors.border, true: colors.primary + '50' }}
+                thumbColor={settings.analytics_sharing ? colors.primary : colors.textSecondary}
               />
             </View>
 
@@ -320,8 +324,8 @@ export default function PrivacySecurityScreen() {
               <Switch
                 value={settings.crash_reporting}
                 onValueChange={(value) => updateSetting('crash_reporting', value)}
-                trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                thumbColor={settings.crash_reporting ? Colors.primary : Colors.textSecondary}
+                trackColor={{ false: colors.border, true: colors.primary + '50' }}
+                thumbColor={settings.crash_reporting ? colors.primary : colors.textSecondary}
               />
             </View>
 
@@ -335,8 +339,8 @@ export default function PrivacySecurityScreen() {
               <Switch
                 value={settings.usage_statistics}
                 onValueChange={(value) => updateSetting('usage_statistics', value)}
-                trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                thumbColor={settings.usage_statistics ? Colors.primary : Colors.textSecondary}
+                trackColor={{ false: colors.border, true: colors.primary + '50' }}
+                thumbColor={settings.usage_statistics ? colors.primary : colors.textSecondary}
               />
             </View>
 
@@ -350,8 +354,8 @@ export default function PrivacySecurityScreen() {
               <Switch
                 value={settings.marketing_data}
                 onValueChange={(value) => updateSetting('marketing_data', value)}
-                trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                thumbColor={settings.marketing_data ? Colors.primary : Colors.textSecondary}
+                trackColor={{ false: colors.border, true: colors.primary + '50' }}
+                thumbColor={settings.marketing_data ? colors.primary : colors.textSecondary}
               />
             </View>
           </View>
@@ -444,10 +448,10 @@ export default function PrivacySecurityScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: Spacing.lg,
@@ -471,13 +475,13 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   title: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   placeholder: {
     width: 40,
@@ -488,13 +492,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   headerSubtitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     opacity: 0.8,
     textAlign: 'center',
   },
@@ -517,19 +521,19 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   settingsCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     overflow: 'hidden',
   },
   settingItem: {
     padding: Spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   settingItemLast: {
     borderBottomWidth: 0,
@@ -540,13 +544,13 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   settingDescription: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: Typography.lineHeights.body,
   },
   timeoutSelector: {
@@ -556,24 +560,24 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   timeoutOption: {
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: colors.surfaceElevated,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   timeoutOptionActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   timeoutOptionText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   timeoutOptionTextActive: {
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   lockIcon: {
     alignItems: 'center',
@@ -585,17 +589,17 @@ const styles = StyleSheet.create({
   enabledText: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.success,
+    color: colors.success,
   },
   actionButton: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   actionButtonIcon: {
     fontSize: 24,
@@ -607,29 +611,29 @@ const styles = StyleSheet.create({
   actionButtonTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   actionButtonDescription: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   actionButtonChevron: {
     fontSize: Typography.fontSizes.subheading,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   securityInfo: {
-    backgroundColor: Colors.success + '10',
+    backgroundColor: colors.success + '10',
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.success + '30',
+    borderColor: colors.success + '30',
   },
   securityTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
     textAlign: 'center',
   },
@@ -647,32 +651,32 @@ const styles = StyleSheet.create({
   securityFeatureText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     flex: 1,
   },
   dangerZone: {
-    backgroundColor: Colors.error + '10',
+    backgroundColor: colors.error + '10',
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.error + '30',
+    borderColor: colors.error + '30',
   },
   dangerTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.error,
+    color: colors.error,
     marginBottom: Spacing.sm,
     textAlign: 'center',
   },
   dangerDescription: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
   dangerButton: {
-    backgroundColor: Colors.error,
+    backgroundColor: colors.error,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
@@ -680,6 +684,6 @@ const styles = StyleSheet.create({
   dangerButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
 })

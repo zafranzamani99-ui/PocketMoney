@@ -14,7 +14,8 @@ import {
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
 import { RootStackParamList } from '../navigation/AppNavigator'
 
@@ -33,6 +34,7 @@ interface Wallet {
 
 export default function WalletManagementScreen() {
   const navigation = useNavigation<NavigationProp>()
+  const { colors } = useTheme()
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [loading, setLoading] = useState(false)
   const [showAddWallet, setShowAddWallet] = useState(false)
@@ -292,10 +294,12 @@ export default function WalletManagementScreen() {
 
   const totalBalance = wallets.reduce((sum, wallet) => sum + wallet.balance, 0)
 
+  const styles = createStyles(colors)
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={[Colors.primary, Colors.secondary]}
+        colors={[colors.primary, colors.secondary]}
         style={styles.header}
       >
         <View style={styles.headerTop}>
@@ -387,7 +391,7 @@ export default function WalletManagementScreen() {
             <TextInput
               style={styles.input}
               placeholder="Wallet Name"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               value={newWallet.name}
               onChangeText={(text) => setNewWallet({...newWallet, name: text})}
             />
@@ -416,7 +420,7 @@ export default function WalletManagementScreen() {
             <TextInput
               style={styles.input}
               placeholder="Initial Balance (Optional)"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               value={newWallet.balance}
               onChangeText={(text) => setNewWallet({...newWallet, balance: text})}
               keyboardType="numeric"
@@ -427,14 +431,14 @@ export default function WalletManagementScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Bank Name"
-                  placeholderTextColor={Colors.textSecondary}
+                  placeholderTextColor={colors.textSecondary}
                   value={newWallet.bank_name}
                   onChangeText={(text) => setNewWallet({...newWallet, bank_name: text})}
                 />
                 <TextInput
                   style={styles.input}
                   placeholder="Account Number"
-                  placeholderTextColor={Colors.textSecondary}
+                  placeholderTextColor={colors.textSecondary}
                   value={newWallet.account_number}
                   onChangeText={(text) => setNewWallet({...newWallet, account_number: text})}
                 />
@@ -507,7 +511,7 @@ export default function WalletManagementScreen() {
             <TextInput
               style={styles.input}
               placeholder="Amount to Transfer"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               value={transferAmount}
               onChangeText={setTransferAmount}
               keyboardType="numeric"
@@ -534,10 +538,10 @@ export default function WalletManagementScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: Spacing.lg,
@@ -563,13 +567,13 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   title: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   addButton: {
     width: 40,
@@ -581,7 +585,7 @@ const styles = StyleSheet.create({
   },
   addIcon: {
     fontSize: 24,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   balanceCard: {
@@ -593,14 +597,14 @@ const styles = StyleSheet.create({
   balanceLabel: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     opacity: 0.8,
     marginBottom: Spacing.xs,
   },
   balanceValue: {
     fontSize: Typography.fontSizes.display,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   content: {
     flex: 1,
@@ -617,10 +621,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   transferButton: {
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
@@ -628,15 +632,15 @@ const styles = StyleSheet.create({
   transferButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   walletCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   walletHeader: {
     flexDirection: 'row',
@@ -656,16 +660,16 @@ const styles = StyleSheet.create({
   walletName: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   walletType: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   primaryBadge: {
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.sm,
@@ -674,17 +678,17 @@ const styles = StyleSheet.create({
   primaryText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   walletBalance: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.success,
+    color: colors.success,
   },
   bankInfo: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.sm,
   },
   walletActions: {
@@ -693,21 +697,21 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    backgroundColor: Colors.primary + '20',
+    backgroundColor: colors.primary + '20',
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
     alignItems: 'center',
   },
   deleteButton: {
-    backgroundColor: Colors.error + '20',
+    backgroundColor: colors.error + '20',
   },
   actionButtonText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.primary,
+    color: colors.primary,
   },
   deleteButtonText: {
-    color: Colors.error,
+    color: colors.error,
   },
   emptyState: {
     alignItems: 'center',
@@ -716,13 +720,13 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   emptyStateSubtext: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   modalOverlay: {
     flex: 1,
@@ -731,32 +735,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   modalContent: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
   },
   modalTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
   input: {
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: colors.surfaceElevated,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     marginBottom: Spacing.md,
   },
   inputLabel: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
     marginTop: Spacing.md,
   },
@@ -769,16 +773,16 @@ const styles = StyleSheet.create({
   typeButton: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: colors.surfaceElevated,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   typeButtonActive: {
-    backgroundColor: Colors.primary + '20',
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary + '20',
+    borderColor: colors.primary,
   },
   typeButtonIcon: {
     fontSize: 20,
@@ -787,27 +791,27 @@ const styles = StyleSheet.create({
   typeButtonText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   typeButtonTextActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   walletSelector: {
     marginBottom: Spacing.md,
   },
   walletOption: {
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: colors.surfaceElevated,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     marginRight: Spacing.sm,
     alignItems: 'center',
     minWidth: 100,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   walletOptionActive: {
-    backgroundColor: Colors.primary + '20',
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary + '20',
+    borderColor: colors.primary,
   },
   walletOptionIcon: {
     fontSize: 18,
@@ -816,14 +820,14 @@ const styles = StyleSheet.create({
   walletOptionName: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: Spacing.xs,
   },
   walletOptionBalance: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   modalActions: {
@@ -838,21 +842,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   confirmButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   cancelButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   confirmButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
 })

@@ -3,71 +3,36 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   Alert,
   Platform,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
 import { supabase } from '../lib/supabase'
 import { RootStackParamList } from '../navigation/AppNavigator'
+import { useTheme } from '../contexts/ThemeContext.js'
 
 type NavigationProp = StackNavigationProp<RootStackParamList>
-
 type ThemeMode = 'light' | 'dark' | 'system'
 
 export default function DarkModeSettingsScreen() {
   const navigation = useNavigation<NavigationProp>()
-  const [selectedTheme, setSelectedTheme] = useState<ThemeMode>('dark')
+  const { theme, colors, setTheme } = useTheme()
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    loadThemeSettings()
-  }, [])
+  // Remove the loadThemeSettings useEffect as theme context handles this
 
-  const loadThemeSettings = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+  // Remove loadThemeSettings function as theme context handles this
 
-      const { data, error } = await supabase
-        .from('user_settings')
-        .select('theme_mode')
-        .eq('user_id', user.id)
-        .single()
-
-      if (error && error.code !== 'PGRST116') throw error
-      
-      if (data?.theme_mode) {
-        setSelectedTheme(data.theme_mode)
-      }
-    } catch (error) {
-      console.error('Error loading theme settings:', error)
-    }
-  }
-
-  const saveThemeSettings = async (theme: ThemeMode) => {
+  const handleThemeChange = async (newTheme: ThemeMode) => {
     setLoading(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('No user found')
-
-      const { error } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          theme_mode: theme,
-          updated_at: new Date().toISOString(),
-        })
-
-      if (error) throw error
-
-      setSelectedTheme(theme)
-      Alert.alert('Success', 'Theme settings updated! Restart the app to see changes.')
+      await setTheme(newTheme)
     } catch (error) {
       Alert.alert('Error', 'Failed to save theme settings')
       console.error(error)
@@ -121,10 +86,12 @@ export default function DarkModeSettingsScreen() {
     ],
   }
 
+  const styles = createStyles(colors)
+
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <LinearGradient
-        colors={[Colors.primary, Colors.secondary]}
+        colors={[colors.primary, colors.secondary]}
         style={styles.header}
       >
         <View style={styles.headerTop}>
@@ -147,48 +114,48 @@ export default function DarkModeSettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Choose Your Theme</Text>
           
-          {themeOptions.map((theme) => (
+          {themeOptions.map((themeOption) => (
             <TouchableOpacity
-              key={theme.id}
+              key={themeOption.id}
               style={[
                 styles.themeOption,
-                selectedTheme === theme.id && styles.themeOptionSelected,
+                theme === themeOption.id && styles.themeOptionSelected,
               ]}
-              onPress={() => saveThemeSettings(theme.id)}
+              onPress={() => handleThemeChange(themeOption.id)}
               disabled={loading}
             >
               <View style={styles.themeHeader}>
                 <View style={styles.themeInfo}>
-                  <Text style={styles.themeIcon}>{theme.icon}</Text>
+                  <Text style={styles.themeIcon}>{themeOption.icon}</Text>
                   <View style={styles.themeDetails}>
                     <Text style={[
                       styles.themeName,
-                      selectedTheme === theme.id && styles.themeNameSelected,
+                      theme === themeOption.id && styles.themeNameSelected,
                     ]}>
-                      {theme.name}
+                      {themeOption.name}
                     </Text>
                     <Text style={styles.themeDescription}>
-                      {theme.description}
+                      {themeOption.description}
                     </Text>
                   </View>
                 </View>
                 
                 <View style={styles.themePreview}>
-                  {theme.preview.map((color, index) => (
+                  {themeOption.preview.map((color, index) => (
                     <View
                       key={index}
                       style={[
                         styles.previewColor,
                         { backgroundColor: color },
                         index === 0 && styles.previewColorFirst,
-                        index === theme.preview.length - 1 && styles.previewColorLast,
+                        index === themeOption.preview.length - 1 && styles.previewColorLast,
                       ]}
                     />
                   ))}
                 </View>
               </View>
 
-              {selectedTheme === theme.id && (
+              {theme === themeOption.id && (
                 <View style={styles.selectedIndicator}>
                   <Text style={styles.selectedText}>✓ Currently Active</Text>
                 </View>
@@ -202,12 +169,12 @@ export default function DarkModeSettingsScreen() {
           
           <View style={styles.benefitsCard}>
             <Text style={styles.benefitsTitle}>
-              {themeOptions.find(t => t.id === selectedTheme)?.icon} {' '}
-              {themeOptions.find(t => t.id === selectedTheme)?.name} Benefits
+              {themeOptions.find(t => t.id === theme)?.icon} {' '}
+              {themeOptions.find(t => t.id === theme)?.name} Benefits
             </Text>
             
             <View style={styles.benefitsList}>
-              {benefits[selectedTheme].map((benefit, index) => (
+              {benefits[theme].map((benefit, index) => (
                 <View key={index} style={styles.benefitItem}>
                   <Text style={styles.benefitIcon}>✨</Text>
                   <Text style={styles.benefitText}>{benefit}</Text>
@@ -223,30 +190,30 @@ export default function DarkModeSettingsScreen() {
           <View style={styles.colorPalette}>
             <View style={styles.colorRow}>
               <View style={styles.colorSample}>
-                <View style={[styles.colorCircle, { backgroundColor: Colors.primary }]} />
+                <View style={[styles.colorCircle, { backgroundColor: colors.primary }]} />
                 <Text style={styles.colorLabel}>Primary</Text>
               </View>
               <View style={styles.colorSample}>
-                <View style={[styles.colorCircle, { backgroundColor: Colors.secondary }]} />
+                <View style={[styles.colorCircle, { backgroundColor: colors.secondary }]} />
                 <Text style={styles.colorLabel}>Secondary</Text>
               </View>
               <View style={styles.colorSample}>
-                <View style={[styles.colorCircle, { backgroundColor: Colors.accent }]} />
+                <View style={[styles.colorCircle, { backgroundColor: colors.accent }]} />
                 <Text style={styles.colorLabel}>Accent</Text>
               </View>
             </View>
             
             <View style={styles.colorRow}>
               <View style={styles.colorSample}>
-                <View style={[styles.colorCircle, { backgroundColor: Colors.success }]} />
+                <View style={[styles.colorCircle, { backgroundColor: colors.success }]} />
                 <Text style={styles.colorLabel}>Success</Text>
               </View>
               <View style={styles.colorSample}>
-                <View style={[styles.colorCircle, { backgroundColor: Colors.error }]} />
+                <View style={[styles.colorCircle, { backgroundColor: colors.error }]} />
                 <Text style={styles.colorLabel}>Error</Text>
               </View>
               <View style={styles.colorSample}>
-                <View style={[styles.colorCircle, { backgroundColor: Colors.textPrimary }]} />
+                <View style={[styles.colorCircle, { backgroundColor: colors.textPrimary }]} />
                 <Text style={styles.colorLabel}>Text</Text>
               </View>
             </View>
@@ -287,7 +254,7 @@ export default function DarkModeSettingsScreen() {
                   { text: 'Cancel', style: 'cancel' },
                   {
                     text: 'Reset',
-                    onPress: () => saveThemeSettings('system'),
+                    onPress: () => handleThemeChange('system'),
                   },
                 ]
               )
@@ -301,13 +268,14 @@ export default function DarkModeSettingsScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xxl + Spacing.lg, // Extra padding for notch
     paddingBottom: Spacing.lg,
     borderBottomLeftRadius: BorderRadius.xl,
     borderBottomRightRadius: BorderRadius.xl,
@@ -328,13 +296,13 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   title: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   placeholder: {
     width: 40,
@@ -345,13 +313,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   headerSubtitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     opacity: 0.8,
     textAlign: 'center',
   },
@@ -365,20 +333,20 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.lg,
   },
   themeOption: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   themeOptionSelected: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '10',
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '10',
   },
   themeHeader: {
     flexDirection: 'row',
@@ -400,16 +368,16 @@ const styles = StyleSheet.create({
   themeName: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   themeNameSelected: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   themeDescription: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: Typography.lineHeights.body,
   },
   themePreview: {
@@ -421,7 +389,7 @@ const styles = StyleSheet.create({
     height: 20,
     marginLeft: -2,
     borderWidth: 2,
-    borderColor: Colors.background,
+    borderColor: colors.background,
   },
   previewColorFirst: {
     borderTopLeftRadius: 10,
@@ -436,25 +404,25 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     paddingTop: Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Colors.primary + '30',
+    borderTopColor: colors.primary + '30',
   },
   selectedText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.primary,
+    color: colors.primary,
     textAlign: 'center',
   },
   benefitsCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   benefitsTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   benefitsList: {
@@ -473,15 +441,15 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: Typography.lineHeights.body,
   },
   colorPalette: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   colorRow: {
     flexDirection: 'row',
@@ -497,20 +465,20 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginBottom: Spacing.sm,
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   colorLabel: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   tipCard: {
-    backgroundColor: Colors.accent + '10',
+    backgroundColor: colors.accent + '10',
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     flexDirection: 'row',
     borderWidth: 1,
-    borderColor: Colors.accent + '30',
+    borderColor: colors.accent + '30',
   },
   tipIcon: {
     fontSize: 24,
@@ -522,45 +490,45 @@ const styles = StyleSheet.create({
   tipTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   tipText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: Typography.lineHeights.body,
   },
   accessibilityInfo: {
-    backgroundColor: Colors.success + '10',
+    backgroundColor: colors.success + '10',
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.success + '30',
+    borderColor: colors.success + '30',
   },
   accessibilityTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   accessibilityText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: Typography.lineHeights.body,
   },
   resetButton: {
-    backgroundColor: Colors.error + '20',
+    backgroundColor: colors.error + '20',
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.error + '40',
+    borderColor: colors.error + '40',
   },
   resetButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.error,
+    color: colors.error,
   },
 })

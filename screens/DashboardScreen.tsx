@@ -7,17 +7,25 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  Dimensions,
+  RefreshControl,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
 import { RootStackParamList } from '../navigation/AppNavigator'
+
+const { width: screenWidth } = Dimensions.get('window')
+const isTablet = screenWidth >= 768
 import AddExpenseModal from '../components/AddExpenseModal'
 import ReceiptScannerModal from '../components/ReceiptScannerModal'
 import WhatsAppParserModal from '../components/WhatsAppParserModal'
 import WalletManagementModal from '../components/WalletManagementModal'
+import DailyClosingModal from '../components/DailyClosingModal'
+import VoiceInputModal from '../components/VoiceInputModal'
 
 type NavigationProp = StackNavigationProp<RootStackParamList>
 
@@ -55,10 +63,13 @@ interface User {
 
 export default function DashboardScreen() {
   const navigation = useNavigation<NavigationProp>()
+  const { colors } = useTheme()
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [showReceiptScanner, setShowReceiptScanner] = useState(false)
   const [showWhatsAppParser, setShowWhatsAppParser] = useState(false)
   const [showWalletManagement, setShowWalletManagement] = useState(false)
+  const [showDailyClosing, setShowDailyClosing] = useState(false)
+  const [showVoiceInput, setShowVoiceInput] = useState(false)
   const [pendingOrders, setPendingOrders] = useState<Order[]>([])
   const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([])
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
@@ -72,6 +83,7 @@ export default function DashboardScreen() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(false)
   const [statsLoading, setStatsLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
   const handleExpenseSuccess = () => {
     setShowAddExpense(false)
@@ -96,6 +108,20 @@ export default function DashboardScreen() {
 
   useEffect(() => {
     loadDashboardData()
+  }, [])
+
+  // Auto-refresh when screen is focused (returning from other screens)
+  useFocusEffect(
+    React.useCallback(() => {
+      loadDashboardData()
+    }, [])
+  )
+
+  // Pull-to-refresh functionality
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true)
+    await loadDashboardData()
+    setRefreshing(false)
   }, [])
 
   const loadDashboardData = async () => {
@@ -313,16 +339,39 @@ export default function DashboardScreen() {
     return 'Good evening! 🌙'
   }
 
+  const styles = createStyles(colors)
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.greeting}>{getGreeting()}</Text>
-          <Text style={styles.businessName}>
-            {user?.business_name || user?.email || 'Welcome'}
-          </Text>
-        </View>
+    <SafeAreaView style={styles.container} edges={isTablet ? ['top'] : ['top', 'bottom']}>
+      <ScrollView 
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+      >
+        <View style={[styles.contentContainer, isTablet && styles.tabletContainer]}>
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <Text style={styles.greeting}>{getGreeting()}</Text>
+              <Text style={styles.businessName}>
+                {user?.business_name || user?.email || 'Welcome'}
+              </Text>
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.posToggle}
+              onPress={() => navigation.navigate('POS')}
+            >
+              <Text style={styles.posToggleIcon}>🏪</Text>
+              <Text style={styles.posToggleText}>POS</Text>
+            </TouchableOpacity>
+          </View>
 
         <View style={styles.summaryCards}>
           <View style={styles.summaryCard}>
@@ -331,7 +380,7 @@ export default function DashboardScreen() {
               {statsLoading ? 'Loading...' : `RM ${dashboardStats.todaySales.toFixed(2)}`}
             </Text>
             <Text style={[styles.summaryChange, 
-              dashboardStats.salesChange.startsWith('+') ? { color: Colors.success } : { color: Colors.error }
+              dashboardStats.salesChange.startsWith('+') ? { color: colors.success } : { color: colors.error }
             ]}>
               {statsLoading ? '...' : `${dashboardStats.salesChange} from yesterday`}
             </Text>
@@ -343,7 +392,7 @@ export default function DashboardScreen() {
               {statsLoading ? 'Loading...' : `RM ${dashboardStats.todayExpenses.toFixed(2)}`}
             </Text>
             <Text style={[styles.summaryChange,
-              dashboardStats.expensesChange.startsWith('-') ? { color: Colors.success } : { color: Colors.error }
+              dashboardStats.expensesChange.startsWith('-') ? { color: colors.success } : { color: colors.error }
             ]}>
               {statsLoading ? '...' : `${dashboardStats.expensesChange} from yesterday`}
             </Text>
@@ -353,7 +402,7 @@ export default function DashboardScreen() {
         <View style={styles.profitCard}>
           <Text style={styles.profitLabel}>Today's Profit</Text>
           <Text style={[styles.profitValue, 
-            dashboardStats.todayProfit < 0 ? { color: Colors.error } : {}
+            dashboardStats.todayProfit < 0 ? { color: colors.error } : {}
           ]}>
             {statsLoading ? 'Loading...' : `RM ${dashboardStats.todayProfit.toFixed(2)}`}
           </Text>
@@ -409,10 +458,10 @@ export default function DashboardScreen() {
           <View style={styles.actionGrid}>
             <TouchableOpacity 
               style={styles.actionButton}
-              onPress={() => navigation.navigate('Orders')}
+              onPress={() => navigation.navigate('POS')}
             >
-              <Text style={styles.actionEmoji}>📋</Text>
-              <Text style={styles.actionText}>Add Orders</Text>
+              <Text style={styles.actionEmoji}>🏪</Text>
+              <Text style={styles.actionText}>New Sale</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -425,6 +474,14 @@ export default function DashboardScreen() {
             
             <TouchableOpacity 
               style={styles.actionButton}
+              onPress={() => setShowReceiptScanner(true)}
+            >
+              <Text style={styles.actionEmoji}>📷</Text>
+              <Text style={styles.actionText}>Scan Receipt</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.actionButton}
               onPress={() => setShowWhatsAppParser(true)}
             >
               <Text style={styles.actionEmoji}>💬</Text>
@@ -433,10 +490,42 @@ export default function DashboardScreen() {
             
             <TouchableOpacity 
               style={styles.actionButton}
+              onPress={() => setShowVoiceInput(true)}
+            >
+              <Text style={styles.actionEmoji}>🎙️</Text>
+              <Text style={styles.actionText}>Voice Entry</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.actionButton}
               onPress={() => setShowWalletManagement(true)}
             >
               <Text style={styles.actionEmoji}>💰</Text>
               <Text style={styles.actionText}>Wallets</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('Analytics')}
+            >
+              <Text style={styles.actionEmoji}>📊</Text>
+              <Text style={styles.actionText}>Analytics</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('Customers')}
+            >
+              <Text style={styles.actionEmoji}>👥</Text>
+              <Text style={styles.actionText}>CRM</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => setShowDailyClosing(true)}
+            >
+              <Text style={styles.actionEmoji}>🔒</Text>
+              <Text style={styles.actionText}>Tutup Kedai</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -475,6 +564,7 @@ export default function DashboardScreen() {
             )}
           </View>
         </View>
+        </View>
       </ScrollView>
 
       {/* Modals */}
@@ -502,32 +592,89 @@ export default function DashboardScreen() {
         onWalletChange={handleWalletChange}
       />
 
+      <DailyClosingModal
+        visible={showDailyClosing}
+        onClose={() => setShowDailyClosing(false)}
+        dashboardStats={dashboardStats}
+      />
+
+      <VoiceInputModal
+        visible={showVoiceInput}
+        onClose={() => setShowVoiceInput(false)}
+        onSuccess={() => {
+          setShowVoiceInput(false)
+          // Refresh dashboard data after voice input
+          loadDashboardData()
+        }}
+      />
+
     </SafeAreaView>
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
+    width: '100%',
   },
   scrollView: {
     flex: 1,
   },
+  contentContainer: {
+    flex: 1,
+  },
+  tabletContainer: {
+    maxWidth: isTablet ? '95%' : 1200,
+    alignSelf: 'center',
+    width: '100%',
+    paddingHorizontal: isTablet ? Spacing.md : Spacing.xl,
+  },
   header: {
-    padding: Spacing.lg,
-    paddingBottom: Spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    padding: isTablet ? Spacing.xl : Spacing.lg,
+    paddingBottom: isTablet ? Spacing.lg : Spacing.md,
+  },
+  headerLeft: {
+    flex: 1,
   },
   greeting: {
-    fontSize: Typography.fontSizes.body,
+    fontSize: isTablet ? Typography.fontSizes.subheading : Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.xs,
   },
   businessName: {
-    fontSize: Typography.fontSizes.heading,
+    fontSize: isTablet ? Typography.fontSizes.display : Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
+  },
+  posToggle: {
+    backgroundColor: colors.primary,
+    borderRadius: isTablet ? BorderRadius.lg : BorderRadius.md,
+    paddingVertical: isTablet ? Spacing.md : Spacing.sm,
+    paddingHorizontal: isTablet ? Spacing.lg : Spacing.md,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: isTablet ? 100 : 70,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  posToggleText: {
+    fontSize: Typography.fontSizes.bodySmall,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: colors.light,
+    marginTop: Spacing.xs,
+    textAlign: 'center',
+  },
+  posToggleIcon: {
+    fontSize: 20,
   },
   summaryCards: {
     flexDirection: 'row',
@@ -537,22 +684,27 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     flex: 1,
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Platform.OS === 'android' ? Spacing.md : Spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: Platform.OS === 'android' ? 2 : 4,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.borderLight,
   },
   summaryLabel: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.xs,
   },
   summaryValue: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   summaryChange: {
@@ -560,41 +712,46 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily.medium,
   },
   profitCard: {
-    backgroundColor: Colors.primary + '20',
-    borderRadius: BorderRadius.md,
-    padding: Spacing.lg,
+    backgroundColor: colors.primary + '15',
+    borderRadius: BorderRadius.lg,
+    padding: Platform.OS === 'android' ? Spacing.lg : Spacing.xl,
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: Platform.OS === 'android' ? 4 : 8,
     borderWidth: 1,
-    borderColor: Colors.primary + '40',
+    borderColor: colors.primary + '30',
   },
   profitLabel: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.xs,
   },
   profitValue: {
     fontSize: Typography.fontSizes.display,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   profitBar: {
     height: 8,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 4,
     marginBottom: Spacing.sm,
   },
   profitBarFill: {
     height: '100%',
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 4,
   },
   profitPercentage: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   pendingOrders: {
     paddingHorizontal: Spacing.lg,
@@ -607,11 +764,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Colors.accent + '10',
+    backgroundColor: colors.accent + '08',
     borderRadius: BorderRadius.md,
-    padding: Spacing.md,
+    padding: Platform.OS === 'android' ? Spacing.md : Spacing.lg,
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: Platform.OS === 'android' ? 2 : 3,
     borderWidth: 1,
-    borderColor: Colors.accent + '30',
+    borderColor: colors.accent + '20',
   },
   orderLeft: {
     flexDirection: 'row',
@@ -622,7 +784,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     marginRight: Spacing.md,
   },
   orderInfo: {
@@ -631,13 +793,13 @@ const styles = StyleSheet.create({
   orderCustomer: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   orderTime: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   orderRight: {
     flexDirection: 'row',
@@ -647,11 +809,11 @@ const styles = StyleSheet.create({
   orderAmount: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.accent,
+    color: colors.accent,
   },
   chevron: {
     fontSize: Typography.fontSizes.subheading,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontFamily: Typography.fontFamily.regular,
   },
   quickActions: {
@@ -661,31 +823,42 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   actionGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.md,
+    gap: Spacing.sm,
+    justifyContent: 'space-between',
   },
   actionButton: {
-    width: '47%',
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
+    width: '31%',
+    backgroundColor: colors.surface,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.sm,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 85,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.borderLight,
   },
   actionEmoji: {
     fontSize: 24,
     marginBottom: Spacing.sm,
   },
   actionText: {
-    fontSize: Typography.fontSizes.body,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    fontSize: Typography.fontSizes.bodySmall,
+    fontFamily: Typography.fontFamily.semiBold,
+    color: colors.textPrimary,
+    textAlign: 'center',
+    lineHeight: 16,
   },
   recentTransactions: {
     paddingHorizontal: Spacing.lg,
@@ -700,7 +873,7 @@ const styles = StyleSheet.create({
   seeAllText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.secondary,
+    color: colors.secondary,
   },
   transactionsList: {
     gap: Spacing.md,
@@ -709,11 +882,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.borderLight,
   },
   transactionLeft: {
     flexDirection: 'row',
@@ -726,12 +904,12 @@ const styles = StyleSheet.create({
   transactionDescription: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   transactionTime: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: Spacing.xs,
   },
   transactionAmount: {
@@ -739,10 +917,10 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily.bold,
   },
   incomeAmount: {
-    color: Colors.success,
+    color: colors.success,
   },
   expenseAmount: {
-    color: Colors.error,
+    color: colors.error,
   },
   emptyTransactions: {
     alignItems: 'center',
@@ -751,6 +929,6 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
 })

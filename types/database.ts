@@ -324,6 +324,387 @@ export interface Database {
           spreadsheet_id?: string
         }
       }
+      business_locations: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          address: string
+          phone: string | null
+          manager_name: string | null
+          is_primary: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          address: string
+          phone?: string | null
+          manager_name?: string | null
+          is_primary?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          address?: string
+          phone?: string | null
+          manager_name?: string | null
+          is_primary?: boolean
+          updated_at?: string
+        }
+      }
+      staff_members: {
+        Row: {
+          id: string
+          user_id: string
+          location_id: string | null
+          name: string
+          role: 'manager' | 'cashier' | 'inventory' | 'sales' | 'admin'
+          phone: string | null
+          email: string | null
+          permissions: any
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          location_id?: string | null
+          name: string
+          role: 'manager' | 'cashier' | 'inventory' | 'sales' | 'admin'
+          phone?: string | null
+          email?: string | null
+          permissions?: any
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          location_id?: string | null
+          name?: string
+          role?: 'manager' | 'cashier' | 'inventory' | 'sales' | 'admin'
+          phone?: string | null
+          email?: string | null
+          permissions?: any
+          is_active?: boolean
+          updated_at?: string
+        }
+      }
+      products: {
+        Row: {
+          id: string
+          user_id: string
+          location_id: string | null
+          name: string
+          description: string | null
+          sku: string | null
+          barcode: string | null
+          cost_price: number
+          selling_price: number
+          stock_quantity: number
+          low_stock_alert: number
+          category: string | null
+          supplier_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          location_id?: string | null
+          name: string
+          description?: string | null
+          sku?: string | null
+          barcode?: string | null
+          cost_price: number
+          selling_price: number
+          stock_quantity?: number
+          low_stock_alert?: number
+          category?: string | null
+          supplier_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          location_id?: string | null
+          name?: string
+          description?: string | null
+          sku?: string | null
+          barcode?: string | null
+          cost_price?: number
+          selling_price?: number
+          stock_quantity?: number
+          low_stock_alert?: number
+          category?: string | null
+          supplier_id?: string | null
+          updated_at?: string
+        }
+      }
+      inventory_movements: {
+        Row: {
+          id: string
+          user_id: string
+          product_id: string
+          location_id: string | null
+          type: 'in' | 'out' | 'adjustment' | 'transfer'
+          quantity: number
+          reason: string | null
+          staff_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          product_id: string
+          location_id?: string | null
+          type: 'in' | 'out' | 'adjustment' | 'transfer'
+          quantity: number
+          reason?: string | null
+          staff_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          product_id?: string
+          location_id?: string | null
+          type?: 'in' | 'out' | 'adjustment' | 'transfer'
+          quantity?: number
+          reason?: string | null
+          staff_id?: string | null
+        }
+      }
+      customer_segments: {
+        Row: {
+          id: string
+          user_id: string
+          customer_id: string
+          segment: 'VIP' | 'Regular' | 'New' | 'Inactive'
+          loyalty_points: number
+          tier_level: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          customer_id: string
+          segment: 'VIP' | 'Regular' | 'New' | 'Inactive'
+          loyalty_points?: number
+          tier_level?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          customer_id?: string
+          segment?: 'VIP' | 'Regular' | 'New' | 'Inactive'
+          loyalty_points?: number
+          tier_level?: number
+          updated_at?: string
+        }
+      }
+      customer_communications: {
+        Row: {
+          id: string
+          user_id: string
+          customer_id: string
+          type: 'whatsapp' | 'sms' | 'email' | 'call'
+          content: string
+          status: 'sent' | 'delivered' | 'read' | 'failed'
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          customer_id: string
+          type: 'whatsapp' | 'sms' | 'email' | 'call'
+          content: string
+          status?: 'sent' | 'delivered' | 'read' | 'failed'
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          customer_id?: string
+          type?: 'whatsapp' | 'sms' | 'email' | 'call'
+          content?: string
+          status?: 'sent' | 'delivered' | 'read' | 'failed'
+        }
+      }
+      business_analytics: {
+        Row: {
+          id: string
+          user_id: string
+          location_id: string | null
+          metric_type: 'revenue' | 'profit' | 'inventory_turnover' | 'customer_acquisition'
+          metric_value: number
+          period_type: 'daily' | 'weekly' | 'monthly' | 'yearly'
+          period_date: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          location_id?: string | null
+          metric_type: 'revenue' | 'profit' | 'inventory_turnover' | 'customer_acquisition'
+          metric_value: number
+          period_type: 'daily' | 'weekly' | 'monthly' | 'yearly'
+          period_date: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          location_id?: string | null
+          metric_type?: 'revenue' | 'profit' | 'inventory_turnover' | 'customer_acquisition'
+          metric_value?: number
+          period_type?: 'daily' | 'weekly' | 'monthly' | 'yearly'
+          period_date?: string
+        }
+      }
+      sync_status: {
+        Row: {
+          id: string
+          user_id: string
+          table_name: string
+          last_sync: string | null
+          sync_conflicts: any | null
+          is_online: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          table_name: string
+          last_sync?: string | null
+          sync_conflicts?: any | null
+          is_online?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          table_name?: string
+          last_sync?: string | null
+          sync_conflicts?: any | null
+          is_online?: boolean
+          updated_at?: string
+        }
+      }
     }
   }
+}
+
+// Additional interfaces for advanced features
+export interface BusinessLocation {
+  id: string
+  user_id: string
+  name: string
+  address: string
+  phone?: string
+  manager_name?: string
+  is_primary: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface StaffMember {
+  id: string
+  user_id: string
+  location_id?: string
+  name: string
+  role: 'manager' | 'cashier' | 'inventory' | 'sales' | 'admin'
+  phone?: string
+  email?: string
+  permissions: any
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface Product {
+  id: string
+  user_id: string
+  location_id?: string
+  name: string
+  description?: string
+  sku?: string
+  barcode?: string
+  cost_price: number
+  selling_price: number
+  stock_quantity: number
+  low_stock_alert: number
+  category?: string
+  supplier_id?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface InventoryMovement {
+  id: string
+  user_id: string
+  product_id: string
+  location_id?: string
+  type: 'in' | 'out' | 'adjustment' | 'transfer'
+  quantity: number
+  reason?: string
+  staff_id?: string
+  created_at: string
+}
+
+export interface CustomerSegment {
+  id: string
+  user_id: string
+  customer_id: string
+  segment: 'VIP' | 'Regular' | 'New' | 'Inactive'
+  loyalty_points: number
+  tier_level: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CustomerCommunication {
+  id: string
+  user_id: string
+  customer_id: string
+  type: 'whatsapp' | 'sms' | 'email' | 'call'
+  content: string
+  status: 'sent' | 'delivered' | 'read' | 'failed'
+  created_at: string
+}
+
+export interface BusinessAnalytics {
+  id: string
+  user_id: string
+  location_id?: string
+  metric_type: 'revenue' | 'profit' | 'inventory_turnover' | 'customer_acquisition'
+  metric_value: number
+  period_type: 'daily' | 'weekly' | 'monthly' | 'yearly'
+  period_date: string
+  created_at: string
+}
+
+export interface SyncStatus {
+  id: string
+  user_id: string
+  table_name: string
+  last_sync?: string
+  sync_conflicts?: any
+  is_online: boolean
+  created_at: string
+  updated_at: string
 }

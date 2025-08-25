@@ -14,7 +14,8 @@ import {
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
 // Mock Google Sheets service for React Native compatibility
 const googleSheetsService = {
@@ -54,6 +55,7 @@ interface SyncStatus {
 
 export default function GoogleSheetsSyncScreen() {
   const navigation = useNavigation<NavigationProp>()
+  const { colors } = useTheme()
   const [loading, setLoading] = useState(false)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
     isConnected: false,
@@ -261,10 +263,12 @@ export default function GoogleSheetsSyncScreen() {
     return date.toLocaleDateString()
   }
 
+  const styles = createStyles(colors)
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={[Colors.primary, Colors.secondary]}
+        colors={[colors.primary, colors.secondary]}
         style={styles.header}
       >
         <View style={styles.headerTop}>
@@ -281,7 +285,7 @@ export default function GoogleSheetsSyncScreen() {
           <View style={styles.connectionStatus}>
             <View style={[
               styles.statusIndicator,
-              { backgroundColor: syncStatus.isConnected ? Colors.success : Colors.error }
+              { backgroundColor: syncStatus.isConnected ? colors.success : colors.error }
             ]} />
             <Text style={styles.statusText}>
               {syncStatus.isConnected ? 'Connected' : 'Not Connected'}
@@ -308,7 +312,7 @@ export default function GoogleSheetsSyncScreen() {
               disabled={loading}
             >
               <LinearGradient
-                colors={[Colors.success, Colors.primary]}
+                colors={[colors.success, colors.primary]}
                 style={styles.connectButtonGradient}
               >
                 <Text style={styles.connectButtonIcon}>📊</Text>
@@ -351,8 +355,8 @@ export default function GoogleSheetsSyncScreen() {
                 <Switch
                   value={syncStatus.autoSyncEnabled}
                   onValueChange={toggleAutoSync}
-                  trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                  thumbColor={syncStatus.autoSyncEnabled ? Colors.primary : Colors.textSecondary}
+                  trackColor={{ false: colors.border, true: colors.primary + '50' }}
+                  thumbColor={syncStatus.autoSyncEnabled ? colors.primary : colors.textSecondary}
                 />
               </View>
             </View>
@@ -483,10 +487,10 @@ export default function GoogleSheetsSyncScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: Spacing.lg,
@@ -514,13 +518,13 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   title: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   openButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -531,7 +535,7 @@ const styles = StyleSheet.create({
   openText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   statusCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
@@ -552,12 +556,12 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   lastSync: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     opacity: 0.8,
   },
   content: {
@@ -573,7 +577,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.lg,
   },
   connectButton: {
@@ -591,21 +595,21 @@ const styles = StyleSheet.create({
   connectButtonText: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   connectButtonSubtext: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     opacity: 0.8,
   },
   connectedCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.success + '30',
+    borderColor: colors.success + '30',
   },
   connectedHeader: {
     flexDirection: 'row',
@@ -619,10 +623,10 @@ const styles = StyleSheet.create({
   connectedText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   disconnectButton: {
-    backgroundColor: Colors.error + '20',
+    backgroundColor: colors.error + '20',
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.sm,
@@ -631,17 +635,17 @@ const styles = StyleSheet.create({
   disconnectText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.error,
+    color: colors.error,
   },
   autoSyncCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   autoSyncInfo: {
     flex: 1,
@@ -649,23 +653,23 @@ const styles = StyleSheet.create({
   autoSyncTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   autoSyncDescription: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   actionButton: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   actionButtonIcon: {
     fontSize: 24,
@@ -677,13 +681,13 @@ const styles = StyleSheet.create({
   actionButtonTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   actionButtonDescription: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -691,23 +695,23 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   statValue: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.primary,
+    color: colors.primary,
     marginBottom: Spacing.xs,
   },
   statLabel: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   howItWorks: {
@@ -721,8 +725,8 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.primary,
-    color: Colors.textPrimary,
+    backgroundColor: colors.primary,
+    color: colors.textPrimary,
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.bold,
     textAlign: 'center',
@@ -735,47 +739,47 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   stepDescription: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: Typography.lineHeights.body,
   },
   templatePreview: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   templateTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
     textAlign: 'center',
   },
   templateTable: {
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderRadius: BorderRadius.sm,
     overflow: 'hidden',
   },
   templateRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   templateHeader: {
     flex: 1,
     padding: Spacing.sm,
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: colors.surfaceElevated,
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     textAlign: 'center',
   },
   templateCell: {
@@ -783,19 +787,19 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   privacyNote: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: Typography.lineHeights.body,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
 })

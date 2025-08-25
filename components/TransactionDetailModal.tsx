@@ -7,20 +7,49 @@ import {
   ScrollView,
   Alert,
   Modal,
+  Platform,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
+
+// Create a scrollable container that works on all platforms
+const ScrollableContainer = ({ children }: { children: React.ReactNode }) => {
+  if (Platform.OS === 'web') {
+    return (
+      <div style={{
+        flex: 1,
+        overflow: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        height: '100%',
+        maxHeight: 'calc(100vh - 200px)'
+      }}>
+        {children}
+      </div>
+    )
+  }
+  
+  return (
+    <ScrollView 
+      style={{ flex: 1 }} 
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: Spacing.xl }}
+    >
+      {children}
+    </ScrollView>
+  )
+}
 
 interface Transaction {
   id: string
   type: 'income' | 'expense'
-  description: string
+  description: string | null
   amount: number
   category: string
-  date: string
-  time: string
-  receipt_url?: string
-  payment_method?: string
+  created_at: string
+  receipt_url?: string | null
+  payment_method?: string | null
   customer?: string
   notes?: string
 }
@@ -32,6 +61,7 @@ interface TransactionDetailModalProps {
 }
 
 export default function TransactionDetailModal({ visible, onClose, transaction }: TransactionDetailModalProps) {
+  const { colors } = useTheme()
   if (!transaction) return null
 
   const handleEdit = () => {
@@ -55,8 +85,8 @@ export default function TransactionDetailModal({ visible, onClose, transaction }
     )
   }
 
-  const formatDateTime = (date: string, time: string) => {
-    const dateObj = new Date(`${date} ${time}`)
+  const formatDateTime = (created_at: string) => {
+    const dateObj = new Date(created_at)
     return {
       date: dateObj.toLocaleDateString('en-MY', { 
         weekday: 'long', 
@@ -67,172 +97,239 @@ export default function TransactionDetailModal({ visible, onClose, transaction }
       time: dateObj.toLocaleTimeString('en-MY', { 
         hour: '2-digit', 
         minute: '2-digit' 
+      }),
+      shortDate: dateObj.toLocaleDateString('en-MY', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
       })
     }
   }
 
-  const { date, time } = formatDateTime(transaction.date, transaction.time)
+  const getTransactionEmoji = (type: string) => {
+    return type === 'income' ? '💰' : '💸'
+  }
+
+  const getTransactionColor = (type: string) => {
+    return type === 'income' ? colors.success : colors.error
+  }
+
+  const { date, time, shortDate } = formatDateTime(transaction.created_at)
+  const styles = createStyles(colors)
 
   return (
     <Modal
       visible={visible}
-      transparent
       animationType="slide"
       onRequestClose={onClose}
+      presentationStyle="fullScreen"
     >
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
-          <LinearGradient
-            colors={[Colors.primary, Colors.secondary]}
-            style={styles.header}
-          >
+      <View style={styles.modalWrapper}>
+        <SafeAreaView style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeIcon}>✕</Text>
+              <Text style={styles.closeIcon}>‹</Text>
             </TouchableOpacity>
             <Text style={styles.title}>Transaction Details</Text>
             <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-              <Text style={styles.editIcon}>✏️</Text>
+              <Text style={styles.editButtonText}>Edit</Text>
             </TouchableOpacity>
-          </LinearGradient>
+          </View>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollableContainer>
+            {/* Featured Amount Card */}
             <LinearGradient
-              colors={transaction.type === 'income' ? [Colors.success + '20', Colors.success + '10'] : [Colors.error + '20', Colors.error + '10']}
+              colors={[getTransactionColor(transaction.type) + '25', getTransactionColor(transaction.type) + '10']}
               style={styles.amountCard}
             >
-              <Text style={styles.amountLabel}>
-                {transaction.type === 'income' ? 'Income' : 'Expense'}
+              <Text style={styles.transactionEmoji}>
+                {getTransactionEmoji(transaction.type)}
               </Text>
-              <Text style={[
-                styles.amountValue,
-                { color: transaction.type === 'income' ? Colors.success : Colors.error }
-              ]}>
+              <Text style={[styles.typeText, { color: getTransactionColor(transaction.type) }]}>
+                {transaction.type.toUpperCase()}
+              </Text>
+              <Text style={styles.amountValue}>
                 {transaction.type === 'income' ? '+' : '-'}RM {transaction.amount.toFixed(2)}
               </Text>
-              <Text style={styles.amountEmoji}>
-                {transaction.type === 'income' ? '💰' : '💸'}
-              </Text>
+              <Text style={styles.categoryBadge}>{transaction.category}</Text>
             </LinearGradient>
 
-            <View style={styles.detailsCard}>
-              <Text style={styles.sectionTitle}>Details</Text>
+            {/* Transaction Information */}
+            <View style={styles.infoCard}>
+              <Text style={styles.sectionTitle}>Transaction Information</Text>
               
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Description</Text>
-                <Text style={styles.detailValue}>{transaction.description}</Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Category</Text>
-                <View style={styles.categoryBadge}>
-                  <Text style={styles.categoryText}>{transaction.category}</Text>
-                </View>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Date</Text>
-                <Text style={styles.detailValue}>{date}</Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Time</Text>
-                <Text style={styles.detailValue}>{time}</Text>
-              </View>
-
-              {transaction.payment_method && (
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Payment Method</Text>
-                  <Text style={styles.detailValue}>{transaction.payment_method}</Text>
-                </View>
-              )}
-
-              {transaction.customer && (
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Customer</Text>
-                  <Text style={styles.detailValue}>{transaction.customer}</Text>
-                </View>
-              )}
-
-              {transaction.notes && (
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Notes</Text>
-                  <Text style={styles.detailValue}>{transaction.notes}</Text>
-                </View>
-              )}
+              <DetailRow 
+                label="Transaction ID" 
+                value={`#${transaction.id.slice(-8).toUpperCase()}`} 
+                colors={colors}
+              />
+              
+              <DetailRow 
+                label="Description" 
+                value={transaction.description || 'No description'} 
+                colors={colors}
+              />
+              
+              <DetailRow 
+                label="Date" 
+                value={shortDate} 
+                colors={colors}
+              />
+              
+              <DetailRow 
+                label="Time" 
+                value={time} 
+                colors={colors}
+              />
+              
+              <DetailRow 
+                label="Amount" 
+                value={`RM ${transaction.amount.toFixed(2)}`} 
+                colors={colors}
+                valueStyle={{ color: getTransactionColor(transaction.type), fontFamily: Typography.fontFamily.bold }}
+              />
             </View>
 
+            {/* Additional Details */}
+            {(transaction.payment_method || transaction.customer || transaction.notes) && (
+              <View style={styles.infoCard}>
+                <Text style={styles.sectionTitle}>Additional Details</Text>
+                
+                {transaction.payment_method && (
+                  <DetailRow 
+                    label="Payment Method" 
+                    value={transaction.payment_method} 
+                    colors={colors}
+                  />
+                )}
+                
+                {transaction.customer && (
+                  <DetailRow 
+                    label="Customer" 
+                    value={transaction.customer} 
+                    colors={colors}
+                  />
+                )}
+                
+                {transaction.notes && (
+                  <DetailRow 
+                    label="Notes" 
+                    value={transaction.notes} 
+                    colors={colors}
+                  />
+                )}
+              </View>
+            )}
+
+            {/* Receipt Section */}
             {transaction.receipt_url && (
-              <View style={styles.receiptCard}>
+              <View style={styles.infoCard}>
                 <Text style={styles.sectionTitle}>Receipt</Text>
                 <TouchableOpacity style={styles.receiptButton}>
                   <Text style={styles.receiptIcon}>📄</Text>
                   <Text style={styles.receiptText}>View Receipt</Text>
+                  <Text style={styles.chevron}>›</Text>
                 </TouchableOpacity>
               </View>
             )}
 
-            <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-              <Text style={styles.deleteText}>Delete Transaction</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
+            {/* Action Buttons */}
+            <View style={styles.actionButtons}>
+              <TouchableOpacity style={styles.editActionButton} onPress={handleEdit}>
+                <Text style={styles.editActionText}>✏️ Edit Transaction</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+                <Text style={styles.deleteText}>🗑️ Delete Transaction</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollableContainer>
+        </SafeAreaView>
       </View>
     </Modal>
   )
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'flex-end',
+// Helper component for detail rows
+const DetailRow = ({ label, value, colors, valueStyle = {} }: any) => (
+  <View style={createDetailRowStyles(colors).row}>
+    <Text style={createDetailRowStyles(colors).label}>{label}</Text>
+    <Text style={[createDetailRowStyles(colors).value, valueStyle]}>{value}</Text>
+  </View>
+)
+
+const createDetailRowStyles = (colors: any) => StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border + '30',
   },
-  modalContainer: {
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-    maxHeight: '85%',
+  label: {
+    fontSize: Typography.fontSizes.body,
+    fontFamily: Typography.fontFamily.medium,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  value: {
+    fontSize: Typography.fontSizes.body,
+    fontFamily: Typography.fontFamily.regular,
+    color: colors.textPrimary,
+    flex: 1.5,
+    textAlign: 'right',
+  },
+})
+
+const createStyles = (colors: any) => StyleSheet.create({
+  modalWrapper: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
+    paddingVertical: Spacing.md,
+    backgroundColor: colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeIcon: {
-    fontSize: 16,
-    color: Colors.textPrimary,
+    fontSize: 24,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   title: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   editButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: colors.primary + '15',
   },
-  editIcon: {
-    fontSize: 14,
-  },
-  content: {
-    flex: 1,
+  editButtonText: {
+    fontSize: Typography.fontSizes.bodySmall,
+    fontFamily: Typography.fontFamily.medium,
+    color: colors.primary,
   },
   amountCard: {
     margin: Spacing.lg,
@@ -240,107 +337,100 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border + '30',
   },
-  amountLabel: {
-    fontSize: Typography.fontSizes.body,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+  transactionEmoji: {
+    fontSize: 48,
+    marginBottom: Spacing.sm,
+  },
+  typeText: {
+    fontSize: Typography.fontSizes.bodySmall,
+    fontFamily: Typography.fontFamily.bold,
+    letterSpacing: 1,
     marginBottom: Spacing.sm,
   },
   amountValue: {
     fontSize: Typography.fontSizes.display,
     fontFamily: Typography.fontFamily.bold,
-    marginBottom: Spacing.sm,
+    color: colors.textPrimary,
+    marginBottom: Spacing.md,
   },
-  amountEmoji: {
-    fontSize: 32,
+  categoryBadge: {
+    fontSize: Typography.fontSizes.bodySmall,
+    fontFamily: Typography.fontFamily.medium,
+    color: colors.textSecondary,
+    backgroundColor: colors.background,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    overflow: 'hidden',
   },
-  detailsCard: {
-    backgroundColor: Colors.surfaceElevated,
+  infoCard: {
+    backgroundColor: colors.surface,
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border + '30',
   },
   sectionTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.lg,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
-    paddingVertical: Spacing.sm,
-  },
-  detailLabel: {
-    fontSize: Typography.fontSizes.body,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
-    flex: 1,
-  },
-  detailValue: {
-    fontSize: Typography.fontSizes.body,
-    fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
-    flex: 2,
-    textAlign: 'right',
-  },
-  categoryBadge: {
-    backgroundColor: Colors.primary + '20',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.sm,
-  },
-  categoryText: {
-    fontSize: Typography.fontSizes.bodySmall,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.primary,
-  },
-  receiptCard: {
-    backgroundColor: Colors.surfaceElevated,
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
   receiptButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.background,
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
-    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border + '40',
   },
   receiptIcon: {
     fontSize: 20,
-    marginRight: Spacing.sm,
+    marginRight: Spacing.md,
   },
   receiptText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
+    flex: 1,
   },
-  deleteButton: {
-    backgroundColor: Colors.error + '20',
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.xl,
+  chevron: {
+    fontSize: Typography.fontSizes.subheading,
+    color: colors.textSecondary,
+  },
+  actionButtons: {
+    padding: Spacing.lg,
+    gap: Spacing.md,
+  },
+  editActionButton: {
+    backgroundColor: colors.primary + '15',
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.error + '40',
+    borderColor: colors.primary + '30',
+  },
+  editActionText: {
+    fontSize: Typography.fontSizes.body,
+    fontFamily: Typography.fontFamily.medium,
+    color: colors.primary,
+    textAlign: 'center',
+  },
+  deleteButton: {
+    backgroundColor: colors.error + '15',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.error + '30',
   },
   deleteText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.error,
+    color: colors.error,
     textAlign: 'center',
   },
 })

@@ -8,9 +8,33 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
 import { gamificationService, Achievement, UserStats } from '../services/gamificationService'
 import { supabase } from '../lib/supabase'
+import { useTheme } from '../contexts/ThemeContext'
+
+interface ColorScheme {
+  primary: string
+  secondary: string
+  accent: string
+  background: string
+  surface: string
+  surfaceElevated: string
+  light: string
+  textPrimary: string
+  textSecondary: string
+  textTertiary: string
+  textDark: string
+  success: string
+  error: string
+  warning: string
+  info: string
+  border: string
+  borderLight: string
+  gradientStart: string
+  gradientEnd: string
+  gradientAccent: string
+}
 
 interface AchievementsModalProps {
   visible: boolean
@@ -22,6 +46,9 @@ export default function AchievementsModal({ visible, onClose }: AchievementsModa
   const [stats, setStats] = useState<UserStats | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedTab, setSelectedTab] = useState<'all' | 'unlocked' | 'locked'>('all')
+  
+  const { colors } = useTheme()
+  const styles = createStyles(colors)
 
   useEffect(() => {
     if (visible) {
@@ -210,7 +237,7 @@ export default function AchievementsModal({ visible, onClose }: AchievementsModa
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.primary} />
+            <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : (
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -283,10 +310,10 @@ export default function AchievementsModal({ visible, onClose }: AchievementsModa
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -295,16 +322,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   title: {
     fontSize: Typography.fontSizes.subheading,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   closeButton: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   placeholder: {
     width: 50,
@@ -325,31 +352,31 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   statValue: {
     fontSize: Typography.fontSizes.subheading,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   statLabel: {
     fontSize: Typography.fontSizes.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.sm,
     padding: 4,
     marginBottom: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   tab: {
     flex: 1,
@@ -358,31 +385,31 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
   },
   tabActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   tabText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   tabTextActive: {
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontWeight: Typography.fontWeights.medium,
   },
   achievementsList: {
     gap: Spacing.md,
   },
   achievementCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     opacity: 0.7,
   },
   achievementCardUnlocked: {
     opacity: 1,
-    borderColor: Colors.success,
-    backgroundColor: Colors.success + '10',
+    borderColor: colors.success,
+    backgroundColor: colors.success + '10',
   },
   achievementHeader: {
     flexDirection: 'row',
@@ -402,27 +429,27 @@ const styles = StyleSheet.create({
   achievementTitle: {
     fontSize: Typography.fontSizes.body,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   achievementTitleLocked: {
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   achievementDescription: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   unlockedBadge: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.success,
+    backgroundColor: colors.success,
     justifyContent: 'center',
     alignItems: 'center',
   },
   unlockedBadgeText: {
     fontSize: Typography.fontSizes.caption,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontWeight: Typography.fontWeights.bold,
   },
   achievementProgress: {
@@ -436,44 +463,44 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: Typography.fontSizes.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   rewardText: {
     fontSize: Typography.fontSizes.caption,
-    color: Colors.primary,
+    color: colors.primary,
     fontWeight: Typography.fontWeights.medium,
   },
   progressBar: {
     height: 6,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     borderRadius: 3,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 3,
   },
   progressBarFillComplete: {
-    backgroundColor: Colors.success,
+    backgroundColor: colors.success,
   },
   unlockedDate: {
-    fontSize: Typography.fontSizes.small,
-    color: Colors.textSecondary,
+    fontSize: Typography.fontSizes.bodySmall,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: Spacing.xs,
   },
   overallProgress: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginVertical: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   overallProgressTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   progressStats: {
@@ -486,11 +513,11 @@ const styles = StyleSheet.create({
   },
   progressStatLabel: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   progressStatValue: {
     fontSize: Typography.fontSizes.body,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
 })

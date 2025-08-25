@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   View,
   Text,
@@ -13,7 +13,8 @@ import {
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { RootStackParamList } from '../navigation/AppNavigator'
 
 type NavigationProp = StackNavigationProp<RootStackParamList>
@@ -29,9 +30,12 @@ interface FAQItem {
 
 export default function HelpFAQScreen() {
   const navigation = useNavigation<NavigationProp>()
+  const { colors }: any = useTheme()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [expandedItems, setExpandedItems] = useState<string[]>([])
+
+  const styles = useMemo(() => createStyles(colors), [colors])
 
   const faqItems: FAQItem[] = [
     {
@@ -188,7 +192,7 @@ export default function HelpFAQScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={[Colors.primary, Colors.secondary]}
+        colors={[colors.primary, colors.secondary]}
         style={styles.header}
       >
         <View style={styles.headerTop}>
@@ -210,7 +214,7 @@ export default function HelpFAQScreen() {
       </LinearGradient>
 
       <ScrollView 
-        style={styles.content} 
+        style={[styles.content, { backgroundColor: colors.background }]} 
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
@@ -218,7 +222,7 @@ export default function HelpFAQScreen() {
           <TextInput
             style={styles.searchInput}
             placeholder="Search for help..."
-            placeholderTextColor={Colors.textSecondary}
+            placeholderTextColor={colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -417,10 +421,10 @@ export default function HelpFAQScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: Spacing.lg,
@@ -435,8 +439,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: Platform.OS === 'ios' ? Spacing.lg : Spacing.md,
     marginBottom: Spacing.lg,
-    marginTop: Spacing.md,
-    marginBottom: Spacing.lg,
   },
   backButton: {
     width: 40,
@@ -448,13 +450,13 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   title: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   supportButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -465,7 +467,7 @@ const styles = StyleSheet.create({
   supportText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   headerInfo: {
     alignItems: 'center',
@@ -473,13 +475,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   headerSubtitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     opacity: 0.8,
     textAlign: 'center',
   },
@@ -494,14 +496,14 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.lg,
   },
   searchInput: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   quickActions: {
     flexDirection: 'row',
@@ -511,12 +513,12 @@ const styles = StyleSheet.create({
   },
   quickAction: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   quickActionIcon: {
     fontSize: 24,
@@ -525,14 +527,14 @@ const styles = StyleSheet.create({
   quickActionTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
     textAlign: 'center',
   },
   quickActionDescription: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   section: {
@@ -542,15 +544,15 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.lg,
   },
   popularItem: {
-    backgroundColor: Colors.accent + '10',
+    backgroundColor: colors.accent + '10',
     borderRadius: BorderRadius.md,
     marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.accent + '30',
+    borderColor: colors.accent + '30',
   },
   popularHeader: {
     flexDirection: 'row',
@@ -561,13 +563,13 @@ const styles = StyleSheet.create({
   popularQuestion: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     flex: 1,
     marginRight: Spacing.md,
   },
   expandIcon: {
     fontSize: Typography.fontSizes.heading,
-    color: Colors.primary,
+    color: colors.primary,
     fontFamily: Typography.fontFamily.medium,
   },
   popularAnswer: {
@@ -575,41 +577,41 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.lg,
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: Typography.lineHeights.body,
   },
   categoryFilter: {
     marginBottom: Spacing.lg,
   },
   categoryButton: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
     marginRight: Spacing.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   categoryButtonActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   categoryButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   categoryButtonTextActive: {
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   faqList: {
     gap: Spacing.md,
   },
   faqItem: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   faqHeader: {
     flexDirection: 'row',
@@ -624,17 +626,17 @@ const styles = StyleSheet.create({
   faqCategory: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.primary,
+    color: colors.primary,
     marginBottom: Spacing.xs,
   },
   faqQuestion: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   popularBadge: {
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
     borderRadius: BorderRadius.sm,
@@ -643,18 +645,18 @@ const styles = StyleSheet.create({
   popularBadgeText: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   faqAnswer: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: colors.border,
   },
   faqAnswerText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: Typography.lineHeights.body,
     marginBottom: Spacing.md,
   },
@@ -664,7 +666,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   tag: {
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: colors.surfaceElevated,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.sm,
@@ -672,7 +674,7 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   noResults: {
     alignItems: 'center',
@@ -685,45 +687,45 @@ const styles = StyleSheet.create({
   noResultsTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   noResultsText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
   contactButton: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
+    backgroundColor: colors.primary,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.sm,
   },
   contactButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   helpfulCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   helpfulTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
     textAlign: 'center',
   },
   helpfulText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
@@ -733,35 +735,35 @@ const styles = StyleSheet.create({
   },
   helpfulButton: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     alignItems: 'center',
   },
   helpfulButtonSecondary: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   helpfulButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   helpfulButtonTextSecondary: {
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   resourcesCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   resourcesTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.lg,
   },
   resourceItem: {
@@ -769,7 +771,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   resourceIcon: {
     fontSize: 20,
@@ -781,16 +783,16 @@ const styles = StyleSheet.create({
   resourceName: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   resourceDescription: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   resourceChevron: {
     fontSize: Typography.fontSizes.subheading,
-    color: Colors.textSecondary,
-  },
+    color: colors.textSecondary,
+  }
 })

@@ -14,9 +14,16 @@
       "Bash(git commit:*)",
       "Bash(git pull:*)",
       "Bash(npx expo start:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(npx tsc:*)",
+      "Bash(mv:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "C:\\c\\Users\\zafra"
+    ]
   }
 }

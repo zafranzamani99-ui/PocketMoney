@@ -21,7 +21,10 @@ import HelpFAQScreen from '../screens/HelpFAQScreen'
 import ContactSupportScreen from '../screens/ContactSupportScreen'
 import TermsPrivacyScreen from '../screens/TermsPrivacyScreen'
 import AddOrderScreen from '../screens/AddOrderScreen'
-import DatabaseTestScreen from '../screens/DatabaseTestScreen'
+import CustomersScreen from '../screens/CustomersScreen'
+import POSScreen from '../screens/POSScreen'
+import POSSettingsScreen from '../screens/POSSettingsScreen'
+import AnalyticsScreen from '../screens/AnalyticsScreen'
 
 export type RootStackParamList = {
   Splash: undefined
@@ -70,7 +73,10 @@ export type RootStackParamList = {
   ContactSupport: undefined
   TermsPrivacy: undefined
   AddOrder: undefined
-  DatabaseTest: undefined
+  POSSettings: undefined
+  Customers: undefined
+  POS: undefined
+  Analytics: undefined
 }
 
 const Stack = createStackNavigator<RootStackParamList>()
@@ -115,7 +121,10 @@ export default function AppNavigator() {
             <Stack.Screen name="ContactSupport" component={ContactSupportScreen} />
             <Stack.Screen name="TermsPrivacy" component={TermsPrivacyScreen} />
             <Stack.Screen name="AddOrder" component={AddOrderScreen} />
-            <Stack.Screen name="DatabaseTest" component={DatabaseTestScreen} />
+            <Stack.Screen name="POSSettings" component={POSSettingsScreen} />
+            <Stack.Screen name="Customers" component={CustomersScreen} />
+            <Stack.Screen name="POS" component={POSScreen} />
+            <Stack.Screen name="Analytics" component={AnalyticsScreen} />
           </>
         ) : (
           <>

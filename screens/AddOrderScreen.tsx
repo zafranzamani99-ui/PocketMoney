@@ -9,14 +9,17 @@ import {
   Alert,
   Modal,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
 import { supabase } from '../lib/supabase'
+import { useTheme } from '../contexts/ThemeContext'
 import { RootStackParamList } from '../navigation/AppNavigator'
+import { ButtonContainer, PrimaryButton, SecondaryButton } from '../components/buttons'
 
 type NavigationProp = StackNavigationProp<RootStackParamList>
 
@@ -34,8 +37,45 @@ interface OrderItem {
   quantity: number
 }
 
+// Create a scrollable container that works on all platforms
+const ScrollableContainer = ({ children }: { children: React.ReactNode }) => {
+  if (Platform.OS === 'web') {
+    return (
+      <div style={{
+        flex: 1,
+        overflow: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        height: '100%',
+        maxHeight: 'calc(100vh - 200px)'
+      }}>
+        {children}
+      </div>
+    )
+  } else {
+    return (
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+        >
+          {children}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    )
+  }
+}
+
 export default function AddOrderScreen() {
   const navigation = useNavigation<NavigationProp>()
+  const { colors } = useTheme()
+  const styles = createStyles(colors)
   const [loading, setLoading] = useState(false)
   const [customers, setCustomers] = useState<Customer[]>([])
   const [showCustomerModal, setShowCustomerModal] = useState(false)
@@ -260,39 +300,10 @@ export default function AddOrderScreen() {
     { id: 'bank_transfer', label: 'Bank Transfer', icon: '🏦' },
   ]
 
-  // Create a scrollable container that works on all platforms
-  const ScrollableContainer = ({ children }: { children: React.ReactNode }) => {
-    if (Platform.OS === 'web') {
-      return (
-        <div style={{
-          flex: 1,
-          overflow: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          height: '100%',
-          maxHeight: 'calc(100vh - 200px)'
-        }}>
-          {children}
-        </div>
-      )
-    } else {
-      const { ScrollView } = require('react-native')
-      return (
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: 100 }}
-          showsVerticalScrollIndicator={true}
-          keyboardShouldPersistTaps="handled"
-        >
-          {children}
-        </ScrollView>
-      )
-    }
-  }
-
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <LinearGradient
-        colors={[Colors.primary, Colors.secondary]}
+        colors={[colors.primary, colors.secondary]}
         style={styles.header}
       >
         <View style={styles.headerTop}>
@@ -300,13 +311,7 @@ export default function AddOrderScreen() {
             <Text style={styles.backIcon}>‹</Text>
           </TouchableOpacity>
           <Text style={styles.title}>New Order</Text>
-          <TouchableOpacity 
-            onPress={createOrder} 
-            style={styles.saveButton}
-            disabled={loading}
-          >
-            <Text style={styles.saveText}>{loading ? 'Creating...' : 'Create'}</Text>
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} />
         </View>
         
         <View style={styles.headerInfo}>
@@ -457,14 +462,13 @@ export default function AddOrderScreen() {
             <TextInput
               style={styles.notesInput}
               placeholder="Add any special instructions or notes..."
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               value={notes}
               onChangeText={updateNotes}
               multiline
-              blurOnSubmit={false}
-              multiline
               numberOfLines={3}
               textAlignVertical="top"
+              blurOnSubmit={false}
             />
           </View>
 
@@ -484,6 +488,22 @@ export default function AddOrderScreen() {
               </View>
             </View>
           )}
+
+          {/* Action Buttons */}
+          <View style={styles.section}>
+            <View style={styles.actionButtons}>
+              <SecondaryButton 
+                title="Cancel" 
+                onPress={() => navigation.goBack()}
+              />
+              <PrimaryButton 
+                title="Create Order" 
+                onPress={createOrder}
+                loading={loading}
+                disabled={!selectedCustomer || orderItems.length === 0}
+              />
+            </View>
+          </View>
         </View>
       </ScrollableContainer>
 
@@ -496,7 +516,7 @@ export default function AddOrderScreen() {
             <TextInput
               style={styles.modalInput}
               placeholder="Customer Name *"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               value={newCustomer.name}
               onChangeText={updateNewCustomerName}
               returnKeyType="next"
@@ -506,7 +526,7 @@ export default function AddOrderScreen() {
             <TextInput
               style={styles.modalInput}
               placeholder="Phone Number"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               value={newCustomer.phone}
               onChangeText={updateNewCustomerPhone}
               keyboardType="phone-pad"
@@ -517,7 +537,7 @@ export default function AddOrderScreen() {
             <TextInput
               style={styles.modalInput}
               placeholder="Email Address"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               value={newCustomer.email}
               onChangeText={updateNewCustomerEmail}
               keyboardType="email-address"
@@ -527,18 +547,16 @@ export default function AddOrderScreen() {
             />
 
             <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
+              <SecondaryButton
+                title="Cancel"
                 onPress={() => setShowCustomerModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
+                size="small"
+              />
+              <PrimaryButton
+                title="Add Customer"
                 onPress={addCustomer}
-              >
-                <Text style={styles.confirmButtonText}>Add Customer</Text>
-              </TouchableOpacity>
+                size="small"
+              />
             </View>
           </View>
         </View>
@@ -553,7 +571,7 @@ export default function AddOrderScreen() {
             <TextInput
               style={styles.modalInput}
               placeholder="Item Name *"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               value={newItem.name}
               onChangeText={updateNewItemName}
               returnKeyType="next"
@@ -563,7 +581,7 @@ export default function AddOrderScreen() {
             <TextInput
               style={styles.modalInput}
               placeholder="Price (RM) *"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               value={newItem.price}
               onChangeText={updateNewItemPrice}
               keyboardType="decimal-pad"
@@ -574,7 +592,7 @@ export default function AddOrderScreen() {
             <TextInput
               style={styles.modalInput}
               placeholder="Quantity"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               value={newItem.quantity}
               onChangeText={updateNewItemQuantity}
               keyboardType="number-pad"
@@ -583,18 +601,16 @@ export default function AddOrderScreen() {
             />
 
             <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
+              <SecondaryButton
+                title="Cancel"
                 onPress={() => setShowItemModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
+                size="small"
+              />
+              <PrimaryButton
+                title="Add Item"
                 onPress={addItem}
-              >
-                <Text style={styles.confirmButtonText}>Add Item</Text>
-              </TouchableOpacity>
+                size="small"
+              />
             </View>
           </View>
         </View>
@@ -603,14 +619,15 @@ export default function AddOrderScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.lg,
+    paddingTop: Spacing.xxl, // Add top padding to avoid notch
     borderBottomLeftRadius: BorderRadius.xl,
     borderBottomRightRadius: BorderRadius.xl,
   },
@@ -630,24 +647,16 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   title: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
-  saveButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.sm,
-  },
-  saveText: {
-    fontSize: Typography.fontSizes.body,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+  headerSpacer: {
+    width: 40, // Same width as backButton for symmetry
   },
   headerInfo: {
     alignItems: 'center',
@@ -655,13 +664,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   headerSubtitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     opacity: 0.8,
     textAlign: 'center',
   },
@@ -681,18 +690,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.lg,
   },
   selectedCustomer: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.primary,
+    borderColor: colors.primary,
   },
   customerInfo: {
     flex: 1,
@@ -700,22 +709,22 @@ const styles = StyleSheet.create({
   customerName: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   customerPhone: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.xs,
   },
   customerEmail: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   changeButton: {
-    backgroundColor: Colors.primary + '20',
+    backgroundColor: colors.primary + '20',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
@@ -723,54 +732,54 @@ const styles = StyleSheet.create({
   changeButtonText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.primary,
+    color: colors.primary,
   },
   customerSelector: {},
   customersScroll: {
     marginBottom: Spacing.md,
   },
   customerOption: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     marginRight: Spacing.md,
     minWidth: 120,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   customerOptionName: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   customerOptionPhone: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   addCustomerButton: {
-    backgroundColor: Colors.primary + '20',
+    backgroundColor: colors.primary + '20',
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     minWidth: 120,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.primary + '40',
+    borderColor: colors.primary + '40',
   },
   addCustomerIcon: {
     fontSize: 20,
-    color: Colors.primary,
+    color: colors.primary,
     marginBottom: Spacing.xs,
   },
   addCustomerText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.primary,
+    color: colors.primary,
   },
   addItemButton: {
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
@@ -778,17 +787,17 @@ const styles = StyleSheet.create({
   addItemText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   orderItem: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   itemInfo: {
     flex: 1,
@@ -796,13 +805,13 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   itemPrice: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   quantityControls: {
     flexDirection: 'row',
@@ -813,21 +822,21 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: colors.surfaceElevated,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   quantityButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   quantityText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.semiBold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginHorizontal: Spacing.md,
     minWidth: 20,
     textAlign: 'center',
@@ -838,21 +847,21 @@ const styles = StyleSheet.create({
   itemTotalText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.success,
+    color: colors.success,
     marginBottom: Spacing.xs,
   },
   removeButton: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.error + '20',
+    backgroundColor: colors.error + '20',
     justifyContent: 'center',
     alignItems: 'center',
   },
   removeButtonText: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.error,
+    color: colors.error,
   },
   emptyItems: {
     alignItems: 'center',
@@ -861,13 +870,13 @@ const styles = StyleSheet.create({
   emptyItemsText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.sm,
   },
   emptyItemsSubtext: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   paymentMethods: {
     flexDirection: 'row',
@@ -877,16 +886,16 @@ const styles = StyleSheet.create({
   paymentMethod: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   paymentMethodActive: {
-    backgroundColor: Colors.primary + '20',
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary + '20',
+    borderColor: colors.primary,
   },
   paymentMethodIcon: {
     fontSize: 24,
@@ -895,34 +904,34 @@ const styles = StyleSheet.create({
   paymentMethodText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   paymentMethodTextActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   notesInput: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     minHeight: 80,
     textAlignVertical: 'top',
   },
   orderSummary: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   summaryTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   summaryRow: {
@@ -933,29 +942,33 @@ const styles = StyleSheet.create({
   },
   totalRow: {
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: colors.border,
     paddingTop: Spacing.md,
     marginTop: Spacing.md,
   },
   summaryLabel: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   summaryValue: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   totalLabel: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   totalValue: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.success,
+    color: colors.success,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: Spacing.md,
   },
   modalOverlay: {
     flex: 1,
@@ -964,55 +977,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   modalContent: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
   },
   modalTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
   modalInput: {
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: colors.surfaceElevated,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     marginBottom: Spacing.md,
   },
   modalActions: {
     flexDirection: 'row',
     gap: Spacing.md,
     marginTop: Spacing.lg,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  confirmButton: {
-    backgroundColor: Colors.primary,
-  },
-  cancelButtonText: {
-    fontSize: Typography.fontSizes.body,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
-  },
-  confirmButtonText: {
-    fontSize: Typography.fontSizes.body,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
   },
 })

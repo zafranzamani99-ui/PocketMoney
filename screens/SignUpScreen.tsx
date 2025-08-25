@@ -9,9 +9,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Dimensions,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+
+const { width: screenWidth } = Dimensions.get('window')
+const isTablet = screenWidth >= 768
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
 
 interface SignUpScreenProps {
@@ -22,6 +27,7 @@ interface SignUpScreenProps {
 const businessTypes = ['Retail', 'Food & Beverage', 'Service', 'Online', 'Technology', 'Healthcare', 'Education', 'Manufacturing', 'Construction', 'Other']
 
 export default function SignUpScreen({ onSignUpSuccess, onNavigateToLogin }: SignUpScreenProps) {
+  const { colors } = useTheme()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [businessName, setBusinessName] = useState('')
@@ -70,13 +76,16 @@ export default function SignUpScreen({ onSignUpSuccess, onNavigateToLogin }: Sig
     }
   }
 
+  const styles = createStyles(colors)
+
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView 
-        style={styles.keyboardContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.container} edges={isTablet ? ['top'] : ['top', 'bottom']}>
+      <View style={[styles.wrapper, isTablet && styles.tabletWrapper]}>
+        <KeyboardAvoidingView 
+          style={styles.keyboardContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <View style={styles.header}>
             <Text style={styles.logo}>💰</Text>
@@ -92,7 +101,7 @@ export default function SignUpScreen({ onSignUpSuccess, onNavigateToLogin }: Sig
                 value={businessName}
                 onChangeText={setBusinessName}
                 placeholder="e.g. Ali's Warung"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
 
@@ -103,7 +112,7 @@ export default function SignUpScreen({ onSignUpSuccess, onNavigateToLogin }: Sig
                 value={email}
                 onChangeText={setEmail}
                 placeholder="Enter your email"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -117,7 +126,7 @@ export default function SignUpScreen({ onSignUpSuccess, onNavigateToLogin }: Sig
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Minimum 6 characters"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 secureTextEntry
               />
             </View>
@@ -129,7 +138,7 @@ export default function SignUpScreen({ onSignUpSuccess, onNavigateToLogin }: Sig
                 value={phone}
                 onChangeText={setPhone}
                 placeholder="e.g. 012-3456789"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="phone-pad"
               />
             </View>
@@ -176,16 +185,26 @@ export default function SignUpScreen({ onSignUpSuccess, onNavigateToLogin }: Sig
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
-      </KeyboardAvoidingView>
+        </ScrollView>
+        </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
+    width: '100%',
+  },
+  wrapper: {
+    flex: 1,
+  },
+  tabletWrapper: {
+    maxWidth: 600,
+    alignSelf: 'center',
+    width: '95%',
   },
   keyboardContainer: {
     flex: 1,
@@ -208,12 +227,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   subtitle: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   form: {
@@ -225,16 +244,16 @@ const styles = StyleSheet.create({
   label: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   businessTypeContainer: {
     flexDirection: 'row',
@@ -246,23 +265,23 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   businessTypeButtonActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   businessTypeText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   businessTypeTextActive: {
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   button: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
@@ -274,16 +293,16 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   linkText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: Spacing.md,
   },
   linkTextHighlight: {
-    color: Colors.primary,
+    color: colors.primary,
     fontFamily: Typography.fontFamily.medium,
   },
 })

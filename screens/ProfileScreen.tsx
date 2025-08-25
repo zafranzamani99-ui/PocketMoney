@@ -7,11 +7,16 @@ import {
   ScrollView,
   Alert,
   Platform,
+  Dimensions,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+
+const { width: screenWidth } = Dimensions.get('window')
+const isTablet = screenWidth >= 768
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
 import { RootStackParamList } from '../navigation/AppNavigator'
 import { RateApp } from '../utils/rateApp'
@@ -34,6 +39,7 @@ interface UserStats {
 
 export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp>()
+  const { colors } = useTheme()
   const [user, setUser] = useState<User | null>(null)
   const [userStats, setUserStats] = useState<UserStats>({
     transactionCount: 0,
@@ -163,6 +169,9 @@ export default function ProfileScreen() {
         // Navigate to the Orders tab for customer info
         showAlert('Customer Management', 'Customer information is available in the Orders tab. Tap the Orders tab to view and manage customer orders.')
         break
+      case 'POS Settings':
+        navigation.navigate('POSSettings' as never)
+        break
       case 'Business Profile':
         navigation.navigate('BusinessProfile' as never)
         break
@@ -225,6 +234,7 @@ export default function ProfileScreen() {
       items: [
         { icon: '📈', label: 'Analytics & Reports', value: 'View insights' },
         { icon: '👥', label: 'Customer Management', value: 'Manage customers' },
+        { icon: '⚡', label: 'POS Settings', value: 'Quick items & pricing' },
       ],
     },
     {
@@ -264,11 +274,14 @@ export default function ProfileScreen() {
     },
   ]
 
+  const styles = createStyles(colors)
+
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
-      </View>
+    <SafeAreaView style={styles.container} edges={isTablet ? ['top'] : ['top', 'bottom']}>
+      <View style={[styles.mainContainer, isTablet && styles.tabletContainer]}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Profile</Text>
+        </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.userCard}>
@@ -352,14 +365,24 @@ export default function ProfileScreen() {
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
       </ScrollView>
+      </View>
     </SafeAreaView>
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
+    width: '100%',
+  },
+  mainContainer: {
+    flex: 1,
+  },
+  tabletContainer: {
+    maxWidth: '95%',
+    alignSelf: 'center',
+    width: '100%',
   },
   header: {
     paddingHorizontal: Spacing.lg,
@@ -368,7 +391,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   scrollView: {
     flex: 1,
@@ -376,19 +399,19 @@ const styles = StyleSheet.create({
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
     padding: Spacing.lg,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   userAvatar: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: Spacing.md,
@@ -396,7 +419,7 @@ const styles = StyleSheet.create({
   userInitial: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   userInfo: {
     flex: 1,
@@ -404,17 +427,17 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   userEmail: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.sm,
   },
   planBadge: {
-    backgroundColor: Colors.accent + '20',
+    backgroundColor: colors.accent + '20',
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.sm,
@@ -423,7 +446,7 @@ const styles = StyleSheet.create({
   planText: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.accent,
+    color: colors.accent,
   },
   statsCards: {
     flexDirection: 'row',
@@ -433,23 +456,23 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     alignItems: 'center',
   },
   statValue: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   statLabel: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   section: {
     paddingHorizontal: Spacing.lg,
@@ -458,14 +481,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   sectionCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   sectionItem: {
     flexDirection: 'row',
@@ -473,7 +496,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   sectionItemDisabled: {
     opacity: 0.5,
@@ -495,10 +518,10 @@ const styles = StyleSheet.create({
   sectionItemLabel: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   sectionItemLabelDisabled: {
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   sectionItemRight: {
     flexDirection: 'row',
@@ -508,17 +531,17 @@ const styles = StyleSheet.create({
   sectionItemValue: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   sectionItemValueDisabled: {
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   chevron: {
     fontSize: Typography.fontSizes.subheading,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   premiumBadge: {
-    backgroundColor: Colors.primary + '20',
+    backgroundColor: colors.primary + '20',
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
     borderRadius: BorderRadius.sm,
@@ -526,21 +549,21 @@ const styles = StyleSheet.create({
   premiumBadgeText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.primary,
+    color: colors.primary,
   },
   signOutButton: {
-    backgroundColor: Colors.error + '20',
+    backgroundColor: colors.error + '20',
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.xl,
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.error + '40',
+    borderColor: colors.error + '40',
   },
   signOutText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.error,
+    color: colors.error,
     textAlign: 'center',
   },
 })

@@ -12,8 +12,10 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
+import { ButtonContainer, PrimaryButton, SecondaryButton } from './buttons'
 
 interface WhatsAppParserModalProps {
   visible: boolean
@@ -36,6 +38,7 @@ interface ParsedOrder {
 }
 
 export default function WhatsAppParserModal({ visible, onClose, onSuccess }: WhatsAppParserModalProps) {
+  const { colors } = useTheme()
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [parsedData, setParsedData] = useState<ParsedOrder | null>(null)
   const [processing, setProcessing] = useState(false)
@@ -358,6 +361,8 @@ export default function WhatsAppParserModal({ visible, onClose, onSuccess }: Wha
     onClose()
   }
 
+  const styles = createStyles(colors)
+
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <View style={styles.container}>
@@ -366,11 +371,7 @@ export default function WhatsAppParserModal({ visible, onClose, onSuccess }: Wha
             <Text style={styles.cancelButton}>Cancel</Text>
           </TouchableOpacity>
           <Text style={styles.title}>WhatsApp Parser</Text>
-          <TouchableOpacity onPress={saveOrder} disabled={!parsedData || processing}>
-            <Text style={[styles.saveButton, (!parsedData || processing) && styles.disabledButton]}>
-              Save
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} />
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -404,7 +405,7 @@ export default function WhatsAppParserModal({ visible, onClose, onSuccess }: Wha
               
               {processing ? (
                 <View style={styles.processingContainer}>
-                  <ActivityIndicator size="large" color={Colors.primary} />
+                  <ActivityIndicator size="large" color={colors.primary} />
                   <Text style={styles.processingText}>Parsing WhatsApp content...</Text>
                 </View>
               ) : parsedData ? (
@@ -485,15 +486,27 @@ export default function WhatsAppParserModal({ visible, onClose, onSuccess }: Wha
             </View>
           )}
         </ScrollView>
+
+        <ButtonContainer>
+          <SecondaryButton 
+            title="Cancel" 
+            onPress={handleClose}
+          />
+          <PrimaryButton 
+            title="Save" 
+            onPress={saveOrder}
+            disabled={!parsedData || processing}
+          />
+        </ButtonContainer>
       </View>
     </Modal>
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -502,24 +515,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   title: {
     fontSize: Typography.fontSizes.subheading,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   cancelButton: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
-  saveButton: {
-    fontSize: Typography.fontSizes.body,
-    color: Colors.primary,
-    fontWeight: Typography.fontWeights.medium,
-  },
-  disabledButton: {
-    opacity: 0.5,
+  headerSpacer: {
+    width: 60, // Same width as Cancel button for symmetry
   },
   content: {
     flex: 1,
@@ -532,19 +540,19 @@ const styles = StyleSheet.create({
   instructionTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
     textAlign: 'center',
   },
   instructionText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: Spacing.xl,
     lineHeight: 24,
   },
   uploadButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: BorderRadius.md,
     paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.xl,
@@ -558,20 +566,20 @@ const styles = StyleSheet.create({
   uploadButtonText: {
     fontSize: Typography.fontSizes.body,
     fontWeight: Typography.fontWeights.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   exampleSection: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     width: '100%',
   },
   exampleTitle: {
     fontSize: Typography.fontSizes.body,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   exampleList: {
@@ -579,7 +587,7 @@ const styles = StyleSheet.create({
   },
   exampleItem: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   previewSection: {
     paddingVertical: Spacing.lg,
@@ -596,20 +604,20 @@ const styles = StyleSheet.create({
   },
   processingText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: Spacing.md,
   },
   parsedDataContainer: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   parsedTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.lg,
   },
   dataSection: {
@@ -617,24 +625,24 @@ const styles = StyleSheet.create({
   },
   dataLabel: {
     fontSize: Typography.fontSizes.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.xs,
     textTransform: 'uppercase',
     fontWeight: Typography.fontWeights.medium,
   },
   dataValue: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   itemRow: {
     paddingVertical: Spacing.xs,
   },
   itemText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   editButton: {
-    backgroundColor: Colors.primary + '20',
+    backgroundColor: colors.primary + '20',
     borderRadius: BorderRadius.sm,
     paddingVertical: Spacing.sm,
     alignItems: 'center',
@@ -642,7 +650,7 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.primary,
+    color: colors.primary,
     fontWeight: Typography.fontWeights.medium,
   },
   errorContainer: {
@@ -651,21 +659,21 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.error,
+    color: colors.error,
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
   retryButton: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   retryButtonText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontWeight: Typography.fontWeights.medium,
   },
 })

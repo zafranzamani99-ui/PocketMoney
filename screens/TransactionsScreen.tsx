@@ -8,12 +8,18 @@ import {
   TextInput,
   Alert,
   Platform,
+  Dimensions,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+
+const { width: screenWidth } = Dimensions.get('window')
+const isTablet = screenWidth >= 768
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
 import CalendarFilter from '../components/CalendarFilter'
 import TransactionDetailModal from '../components/TransactionDetailModal'
+import AddExpenseModal from '../components/AddExpenseModal'
 
 
 interface Transaction {
@@ -30,6 +36,7 @@ interface Transaction {
 }
 
 export default function TransactionsScreen() {
+  const { colors } = useTheme()
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedDate, setSelectedDate] = useState('')
@@ -37,13 +44,18 @@ export default function TransactionsScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [showTransactionDetail, setShowTransactionDetail] = useState(false)
+  const [showAddExpense, setShowAddExpense] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const filteredTransactions = transactions.filter(transaction => {
     const matchesFilter = filter === 'all' || transaction.type === filter
     const matchesSearch = transaction.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          transaction.category?.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesDate = !selectedDate || transaction.date === selectedDate
+    
+    // Compare dates properly - transaction.created_at is like "2023-12-25T10:30:00Z"
+    // selectedDate is like "2023-12-25"
+    const matchesDate = !selectedDate || transaction.created_at.split('T')[0] === selectedDate
+    
     return matchesFilter && matchesSearch && matchesDate
   })
 
@@ -146,6 +158,10 @@ export default function TransactionsScreen() {
     })
   }
 
+  const clearDateFilter = () => {
+    setSelectedDate('')
+  }
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('en-MY', {
@@ -191,9 +207,12 @@ export default function TransactionsScreen() {
     </TouchableOpacity>
   )
 
+  const styles = createStyles(colors)
+
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.header}>
+    <SafeAreaView style={styles.container} edges={isTablet ? ['top'] : ['bottom']}>
+      <View style={[styles.mainContainer, isTablet && styles.tabletContainer]}>
+        <View style={styles.header}>
         <Text style={styles.title}>Transactions</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity 
@@ -205,9 +224,6 @@ export default function TransactionsScreen() {
               {formatSelectedDate()}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.addButton}>
-            <Text style={styles.addButtonText}>+ Add</Text>
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -215,7 +231,7 @@ export default function TransactionsScreen() {
         <TextInput
           style={styles.searchInput}
           placeholder="Search transactions..."
-          placeholderTextColor={Colors.textSecondary}
+          placeholderTextColor={colors.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -294,26 +310,53 @@ export default function TransactionsScreen() {
         onClose={() => setShowTransactionDetail(false)}
         transaction={selectedTransaction}
       />
+
+      <TouchableOpacity 
+        style={styles.floatingButton}
+        onPress={() => setShowAddExpense(true)}
+      >
+        <Text style={styles.floatingButtonText}>+</Text>
+      </TouchableOpacity>
+
+      <AddExpenseModal
+        visible={showAddExpense}
+        onClose={() => setShowAddExpense(false)}
+        onSuccess={() => {
+          setShowAddExpense(false)
+          loadTransactions()
+        }}
+      />
+      </View>
     </SafeAreaView>
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
+    width: '100%',
+  },
+  mainContainer: {
+    flex: 1,
+  },
+  tabletContainer: {
+    maxWidth: '95%',
+    alignSelf: 'center',
+    width: '100%',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
+    paddingTop: Spacing.xxl + Spacing.md, // Move header lower
   },
   title: {
-    fontSize: Typography.fontSizes.heading,
+    fontSize: Typography.fontSizes.display,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   headerActions: {
     flexDirection: 'row',
@@ -323,16 +366,16 @@ const styles = StyleSheet.create({
   dateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   dateButtonActive: {
-    backgroundColor: Colors.primary + '20',
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary + '20',
+    borderColor: colors.primary,
   },
   dateButtonIcon: {
     fontSize: 16,
@@ -341,35 +384,24 @@ const styles = StyleSheet.create({
   dateButtonText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   dateButtonTextActive: {
-    color: Colors.primary,
-  },
-  addButton: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.sm,
-  },
-  addButtonText: {
-    fontSize: Typography.fontSizes.body,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.primary,
   },
   searchContainer: {
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
   },
   searchInput: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   filterContainer: {
     flexDirection: 'row',
@@ -382,20 +414,20 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   filterButtonActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   filterButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   filterButtonTextActive: {
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   summaryRow: {
@@ -406,17 +438,17 @@ const styles = StyleSheet.create({
   },
   summaryItem: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     alignItems: 'center',
   },
   summaryLabel: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.xs,
   },
   summaryValue: {
@@ -434,12 +466,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
+    padding: Spacing.sm,
+    marginBottom: Spacing.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   transactionLeft: {
     flexDirection: 'row',
@@ -447,13 +479,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   transactionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.background,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: Spacing.md,
+    marginRight: Spacing.sm,
   },
   transactionEmoji: {
     fontSize: 18,
@@ -464,19 +496,19 @@ const styles = StyleSheet.create({
   transactionDescription: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   transactionCategory: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.xs,
   },
   transactionDateTime: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   transactionRight: {
     alignItems: 'flex-end',
@@ -490,14 +522,14 @@ const styles = StyleSheet.create({
   },
   chevron: {
     fontSize: Typography.fontSizes.subheading,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontFamily: Typography.fontFamily.regular,
   },
   incomeAmount: {
-    color: Colors.success,
+    color: colors.success,
   },
   expenseAmount: {
-    color: Colors.error,
+    color: colors.error,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -510,15 +542,36 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   emptyText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: Typography.lineHeights.body,
     paddingHorizontal: Spacing.lg,
+  },
+  floatingButton: {
+    position: 'absolute',
+    right: Spacing.lg,
+    bottom: Spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  floatingButtonText: {
+    fontSize: 24,
+    fontFamily: Typography.fontFamily.bold,
+    color: colors.textPrimary,
   },
 })

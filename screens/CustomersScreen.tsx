@@ -9,9 +9,16 @@ import {
   TextInput,
   Alert,
   Linking,
+  Modal,
 } from 'react-native'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
+import { useNavigation } from '@react-navigation/native'
+import { StackNavigationProp } from '@react-navigation/stack'
+import { RootStackParamList } from '../navigation/AppNavigator'
+
+type NavigationProp = StackNavigationProp<RootStackParamList>
 
 interface Customer {
   id: string
@@ -23,6 +30,8 @@ interface Customer {
 }
 
 export default function CustomersScreen() {
+  const navigation = useNavigation<NavigationProp>()
+  const { colors } = useTheme()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -152,10 +161,15 @@ export default function CustomersScreen() {
     })
   }
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (customer.phone && customer.phone.includes(searchQuery))
-  )
+  const filteredCustomers = customers.filter(customer => {
+    const query = searchQuery.toLowerCase().trim()
+    if (!query) return true
+    
+    const nameMatch = customer.name.toLowerCase().includes(query)
+    const phoneMatch = customer.phone && customer.phone.toLowerCase().includes(query)
+    
+    return nameMatch || phoneMatch
+  })
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Never'
@@ -226,23 +240,28 @@ export default function CustomersScreen() {
     </View>
   )
 
+  const styles = createStyles(colors)
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Customers</Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => setShowAddForm(true)}
-        >
-          <Text style={styles.addButtonText}>+ Add</Text>
-        </TouchableOpacity>
+        <View style={styles.headerTop}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backIcon}>‹</Text>
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.title}>Customers</Text>
+            <Text style={styles.headerDescription}>Manage your customer relationships</Text>
+          </View>
+          <View style={styles.headerSpacer} />
+        </View>
       </View>
 
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search customers..."
-          placeholderTextColor={Colors.textSecondary}
+          placeholder="Search by name or phone number..."
+          placeholderTextColor={colors.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -260,55 +279,6 @@ export default function CustomersScreen() {
           <Text style={styles.statLabel}>Total Revenue</Text>
         </View>
       </View>
-
-      {showAddForm && (
-        <View style={styles.addForm}>
-          <Text style={styles.addFormTitle}>Add New Customer</Text>
-          
-          <TextInput
-            style={styles.addFormInput}
-            placeholder="Customer Name"
-            placeholderTextColor={Colors.textSecondary}
-            value={newCustomerName}
-            onChangeText={setNewCustomerName}
-          />
-          
-          <TextInput
-            style={styles.addFormInput}
-            placeholder="Phone Number (Optional)"
-            placeholderTextColor={Colors.textSecondary}
-            value={newCustomerPhone}
-            onChangeText={setNewCustomerPhone}
-            keyboardType="phone-pad"
-          />
-
-          <View style={styles.addFormActions}>
-            <TouchableOpacity
-              style={styles.addFormCancelButton}
-              onPress={() => {
-                setShowAddForm(false)
-                setNewCustomerName('')
-                setNewCustomerPhone('')
-              }}
-            >
-              <Text style={styles.addFormCancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.addFormSaveButton}
-              onPress={handleAddCustomer}
-              disabled={!newCustomerName.trim() || loading}
-            >
-              <Text style={[
-                styles.addFormSaveButtonText,
-                (!newCustomerName.trim() || loading) && styles.disabledButtonText
-              ]}>
-                {loading ? 'Adding...' : 'Add Customer'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
 
       <FlatList
         data={filteredCustomers}
@@ -329,50 +299,155 @@ export default function CustomersScreen() {
           </View>
         }
       />
+      
+      <TouchableOpacity 
+        style={styles.floatingButton}
+        onPress={() => setShowAddForm(true)}
+      >
+        <Text style={styles.floatingButtonText}>+</Text>
+      </TouchableOpacity>
+
+      <Modal
+        visible={showAddForm}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowAddForm(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add New Customer</Text>
+            
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Customer Name"
+              placeholderTextColor={colors.textSecondary}
+              value={newCustomerName}
+              onChangeText={setNewCustomerName}
+            />
+            
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Phone Number (Optional)"
+              placeholderTextColor={colors.textSecondary}
+              value={newCustomerPhone}
+              onChangeText={setNewCustomerPhone}
+              keyboardType="phone-pad"
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => {
+                  setShowAddForm(false)
+                  setNewCustomerName('')
+                  setNewCustomerPhone('')
+                }}
+              >
+                <Text style={styles.modalCancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.modalSaveButton}
+                onPress={handleAddCustomer}
+                disabled={!newCustomerName.trim() || loading}
+              >
+                <Text style={[
+                  styles.modalSaveButtonText,
+                  (!newCustomerName.trim() || loading) && styles.disabledButtonText
+                ]}>
+                  {loading ? 'Adding...' : 'Add Customer'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
+    paddingTop: Spacing.xxl + Spacing.md,
+  },
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backIcon: {
+    fontSize: 24,
+    color: colors.textPrimary,
+    fontFamily: Typography.fontFamily.medium,
+  },
+  headerContent: {
+    flex: 1,
+    alignItems: 'center',
   },
   title: {
     fontSize: Typography.fontSizes.heading,
-    fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    fontFamily: Typography.fontFamily.bold,
+    color: colors.textPrimary,
+    marginBottom: Spacing.xs,
+    textAlign: 'center',
   },
-  addButton: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.sm,
-  },
-  addButtonText: {
+  headerDescription: {
     fontSize: Typography.fontSizes.body,
-    fontWeight: Typography.fontWeights.medium,
-    color: Colors.textPrimary,
+    fontFamily: Typography.fontFamily.regular,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  headerSpacer: {
+    width: 40, // Same width as backButton for symmetry
+  },
+  floatingButton: {
+    position: 'absolute',
+    right: Spacing.lg,
+    bottom: Spacing.xl + Spacing.lg, // Move higher up from bottom
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  floatingButtonText: {
+    fontSize: 24,
+    fontFamily: Typography.fontFamily.bold,
+    color: colors.light,
   },
   searchContainer: {
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
   },
   searchInput: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -382,76 +457,84 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   statValue: {
     fontSize: Typography.fontSizes.subheading,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   statLabel: {
     fontSize: Typography.fontSizes.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
-  addForm: {
-    backgroundColor: Colors.surface,
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.lg,
-    borderRadius: BorderRadius.md,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.lg,
+  },
+  modalContent: {
+    backgroundColor: colors.surface,
+    borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    maxWidth: 400,
+    alignSelf: 'center',
+    width: '100%',
   },
-  addFormTitle: {
+  modalTitle: {
     fontSize: Typography.fontSizes.subheading,
-    fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.md,
+    fontFamily: Typography.fontFamily.bold,
+    color: colors.textPrimary,
+    marginBottom: Spacing.lg,
+    textAlign: 'center',
   },
-  addFormInput: {
-    backgroundColor: Colors.background,
-    borderRadius: BorderRadius.sm,
+  modalInput: {
+    backgroundColor: colors.background,
+    borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     marginBottom: Spacing.md,
   },
-  addFormActions: {
+  modalActions: {
     flexDirection: 'row',
     gap: Spacing.md,
+    marginTop: Spacing.md,
   },
-  addFormCancelButton: {
+  modalCancelButton: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
-  addFormCancelButtonText: {
+  modalCancelButtonText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    fontFamily: Typography.fontFamily.medium,
+    color: colors.textSecondary,
   },
-  addFormSaveButton: {
+  modalSaveButton: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.md,
     alignItems: 'center',
   },
-  addFormSaveButtonText: {
+  modalSaveButtonText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
-    fontWeight: Typography.fontWeights.medium,
+    fontFamily: Typography.fontFamily.bold,
+    color: colors.light,
   },
   disabledButtonText: {
     opacity: 0.5,
@@ -464,12 +547,12 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xl,
   },
   customerCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   customerHeader: {
     marginBottom: Spacing.md,
@@ -482,7 +565,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: Colors.primary + '20',
+    backgroundColor: colors.primary + '20',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: Spacing.md,
@@ -490,7 +573,7 @@ const styles = StyleSheet.create({
   customerInitials: {
     fontSize: Typography.fontSizes.body,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.primary,
+    color: colors.primary,
   },
   customerDetails: {
     flex: 1,
@@ -498,23 +581,23 @@ const styles = StyleSheet.create({
   customerName: {
     fontSize: Typography.fontSizes.body,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   customerPhone: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.xs,
   },
   customerStats: {
     fontSize: Typography.fontSizes.caption,
-    color: Colors.success,
+    color: colors.success,
     fontWeight: Typography.fontWeights.medium,
     marginBottom: Spacing.xs,
   },
   customerLastOrder: {
     fontSize: Typography.fontSizes.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   customerActions: {
     flexDirection: 'row',
@@ -522,21 +605,21 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    backgroundColor: Colors.primary + '20',
+    backgroundColor: colors.primary + '20',
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
     alignItems: 'center',
   },
   deleteButton: {
-    backgroundColor: Colors.error + '20',
+    backgroundColor: colors.error + '20',
   },
   actionButtonText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.primary,
+    color: colors.primary,
     fontWeight: Typography.fontWeights.medium,
   },
   deleteButtonText: {
-    color: Colors.error,
+    color: colors.error,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -549,12 +632,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   emptyText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
     paddingHorizontal: Spacing.lg,

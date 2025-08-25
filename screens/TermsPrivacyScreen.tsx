@@ -13,7 +13,8 @@ import {
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { RootStackParamList } from '../navigation/AppNavigator'
 
 type NavigationProp = StackNavigationProp<RootStackParamList>
@@ -31,6 +32,7 @@ interface Document {
 
 export default function TermsPrivacyScreen() {
   const navigation = useNavigation<NavigationProp>()
+  const { colors } = useTheme()
   const [selectedDocument, setSelectedDocument] = useState<DocumentType>('terms')
 
   const documents: Document[] = [
@@ -249,10 +251,12 @@ export default function TermsPrivacyScreen() {
     )
   }
 
+  const styles = createStyles(colors)
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={[Colors.primary, Colors.secondary]}
+        colors={[colors.primary, colors.secondary]}
         style={styles.header}
       >
         <View style={styles.headerTop}>
@@ -378,10 +382,10 @@ export default function TermsPrivacyScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: Spacing.lg,
@@ -409,13 +413,13 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   title: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   actionButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -426,7 +430,7 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   headerInfo: {
     alignItems: 'center',
@@ -434,13 +438,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   headerSubtitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     opacity: 0.8,
     textAlign: 'center',
   },
@@ -448,9 +452,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   documentTabs: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   documentTab: {
     paddingHorizontal: Spacing.lg,
@@ -461,7 +465,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   documentTabActive: {
-    borderBottomColor: Colors.primary,
+    borderBottomColor: colors.primary,
   },
   documentTabIcon: {
     fontSize: 16,
@@ -470,10 +474,10 @@ const styles = StyleSheet.create({
   documentTabText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   documentTabTextActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   documentContent: {
     flex: 1,
@@ -485,7 +489,7 @@ const styles = StyleSheet.create({
   documentHeader: {
     paddingVertical: Spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   documentInfo: {
     marginBottom: Spacing.lg,
@@ -493,13 +497,13 @@ const styles = StyleSheet.create({
   documentTitle: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   documentDescription: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.md,
   },
   documentMeta: {
@@ -509,12 +513,12 @@ const styles = StyleSheet.create({
   documentVersion: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.primary,
+    color: colors.primary,
   },
   documentUpdated: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   documentActions: {
     flexDirection: 'row',
@@ -522,12 +526,12 @@ const styles = StyleSheet.create({
   },
   documentAction: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   documentActionIcon: {
     fontSize: 20,
@@ -536,7 +540,7 @@ const styles = StyleSheet.create({
   documentActionText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   documentBody: {
     paddingVertical: Spacing.lg,
@@ -547,35 +551,35 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   sectionContent: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: Typography.lineHeights.body,
   },
   documentFooter: {
     paddingVertical: Spacing.lg,
   },
   contactCard: {
-    backgroundColor: Colors.primary + '10',
+    backgroundColor: colors.primary + '10',
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.primary + '30',
+    borderColor: colors.primary + '30',
   },
   contactTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   contactText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: Typography.lineHeights.body,
     marginBottom: Spacing.lg,
   },
@@ -585,44 +589,44 @@ const styles = StyleSheet.create({
   },
   contactButton: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     alignItems: 'center',
   },
   contactButtonSecondary: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   contactButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   contactButtonTextSecondary: {
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   legalNotice: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginTop: Spacing.lg,
     marginBottom: Spacing.xxl,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   legalNoticeTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
     textAlign: 'center',
   },
   legalNoticeText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: Typography.lineHeights.body,
     textAlign: 'center',
     marginBottom: Spacing.md,
@@ -630,7 +634,7 @@ const styles = StyleSheet.create({
   legalNoticeFooter: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
 })

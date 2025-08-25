@@ -10,7 +10,8 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { walletService, Wallet } from '../services/walletService'
 import { supabase } from '../lib/supabase'
 
@@ -21,6 +22,7 @@ interface WalletManagementModalProps {
 }
 
 export default function WalletManagementModal({ visible, onClose, onWalletChange }: WalletManagementModalProps) {
+  const { colors } = useTheme()
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [loading, setLoading] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
@@ -182,6 +184,8 @@ export default function WalletManagementModal({ visible, onClose, onWalletChange
     }
   }
 
+  const styles = createStyles(colors)
+
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <View style={styles.container}>
@@ -216,7 +220,7 @@ export default function WalletManagementModal({ visible, onClose, onWalletChange
 
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={Colors.primary} />
+              <ActivityIndicator size="large" color={colors.primary} />
             </View>
           ) : (
             <View style={styles.walletsList}>
@@ -282,7 +286,7 @@ export default function WalletManagementModal({ visible, onClose, onWalletChange
                   value={newWalletName}
                   onChangeText={setNewWalletName}
                   placeholder="e.g. Main Cash, Bank BCA"
-                  placeholderTextColor={Colors.textSecondary}
+                  placeholderTextColor={colors.textSecondary}
                 />
               </View>
 
@@ -389,7 +393,7 @@ export default function WalletManagementModal({ visible, onClose, onWalletChange
                   value={transferAmount}
                   onChangeText={setTransferAmount}
                   placeholder="0.00"
-                  placeholderTextColor={Colors.textSecondary}
+                  placeholderTextColor={colors.textSecondary}
                   keyboardType="decimal-pad"
                 />
               </View>
@@ -428,10 +432,10 @@ export default function WalletManagementModal({ visible, onClose, onWalletChange
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -440,20 +444,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   title: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   cancelButton: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   addButton: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.primary,
+    color: colors.primary,
     fontFamily: Typography.fontFamily.medium,
   },
   content: {
@@ -461,34 +465,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   totalBalanceCard: {
-    backgroundColor: Colors.primary + '20',
+    backgroundColor: colors.primary + '20',
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginVertical: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.primary + '40',
+    borderColor: colors.primary + '40',
     alignItems: 'center',
   },
   totalBalanceLabel: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.xs,
   },
   totalBalanceValue: {
     fontSize: Typography.fontSizes.heading * 1.2,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   transferButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
   },
   transferButtonText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   disabledButtonText: {
@@ -503,11 +507,11 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xl,
   },
   walletCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   walletHeader: {
     flexDirection: 'row',
@@ -526,11 +530,11 @@ const styles = StyleSheet.create({
   walletName: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   walletType: {
     fontSize: Typography.fontSizes.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   walletActions: {
     alignItems: 'flex-end',
@@ -538,18 +542,18 @@ const styles = StyleSheet.create({
   walletBalance: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   primaryBadge: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
     borderRadius: BorderRadius.sm,
   },
   primaryBadgeText: {
     fontSize: Typography.fontSizes.caption,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.bold,
   },
   walletControls: {
@@ -558,34 +562,34 @@ const styles = StyleSheet.create({
   },
   controlButton: {
     flex: 1,
-    backgroundColor: Colors.primary + '20',
+    backgroundColor: colors.primary + '20',
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
     alignItems: 'center',
   },
   deleteButton: {
-    backgroundColor: Colors.error + '20',
+    backgroundColor: colors.error + '20',
   },
   controlButtonText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.primary,
+    color: colors.primary,
     fontFamily: Typography.fontFamily.medium,
   },
   deleteButtonText: {
-    color: Colors.error,
+    color: colors.error,
   },
   formContainer: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginVertical: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   formTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.lg,
   },
   inputContainer: {
@@ -594,17 +598,17 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   textInput: {
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderRadius: BorderRadius.sm,
     padding: Spacing.md,
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   typeSelector: {
     flexDirection: 'row',
@@ -612,16 +616,16 @@ const styles = StyleSheet.create({
   },
   typeButton: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderRadius: BorderRadius.sm,
     padding: Spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   typeButtonSelected: {
-    backgroundColor: Colors.primary + '20',
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary + '20',
+    borderColor: colors.primary,
   },
   typeEmoji: {
     fontSize: 20,
@@ -629,29 +633,29 @@ const styles = StyleSheet.create({
   },
   typeText: {
     fontSize: Typography.fontSizes.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   typeTextSelected: {
-    color: Colors.primary,
+    color: colors.primary,
     fontFamily: Typography.fontFamily.medium,
   },
   walletSelector: {
     gap: Spacing.sm,
   },
   walletSelectorButton: {
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderRadius: BorderRadius.sm,
     padding: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   walletSelectorButtonSelected: {
-    backgroundColor: Colors.primary + '20',
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary + '20',
+    borderColor: colors.primary,
   },
   walletSelectorText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   formActions: {
     flexDirection: 'row',
@@ -660,27 +664,27 @@ const styles = StyleSheet.create({
   },
   formCancelButton: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.sm,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   formCancelButtonText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   formSaveButton: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.sm,
     alignItems: 'center',
   },
   formSaveButtonText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
 })

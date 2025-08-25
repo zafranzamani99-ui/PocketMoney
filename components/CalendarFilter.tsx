@@ -7,8 +7,8 @@ import {
   Modal,
   ScrollView,
 } from 'react-native'
-import { LinearGradient } from 'expo-linear-gradient'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 
 interface CalendarFilterProps {
   visible: boolean
@@ -25,6 +25,7 @@ const MONTHS = [
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 export default function CalendarFilter({ visible, onClose, onDateSelect, selectedDate }: CalendarFilterProps) {
+  const { colors } = useTheme()
   const today = new Date()
   const [currentMonth, setCurrentMonth] = useState(today.getMonth())
   const [currentYear, setCurrentYear] = useState(today.getFullYear())
@@ -127,6 +128,8 @@ export default function CalendarFilter({ visible, onClose, onDateSelect, selecte
     return days
   }
 
+  const styles = createStyles(colors)
+
   return (
     <Modal
       visible={visible}
@@ -134,20 +137,9 @@ export default function CalendarFilter({ visible, onClose, onDateSelect, selecte
       animationType="fade"
       onRequestClose={onClose}
     >
-      <TouchableOpacity 
-        style={styles.overlay}
-        activeOpacity={1}
-        onPress={onClose}
-      >
-        <TouchableOpacity 
-          style={styles.modalContainer}
-          activeOpacity={1}
-          onPress={(e) => e.stopPropagation()}
-        >
-          <LinearGradient
-            colors={[Colors.primary, Colors.secondary]}
-            style={styles.header}
-          >
+      <View style={styles.overlay}>
+        <View style={styles.modalContainer}>
+          <View style={styles.header}>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Text style={styles.closeIcon}>✕</Text>
             </TouchableOpacity>
@@ -155,9 +147,9 @@ export default function CalendarFilter({ visible, onClose, onDateSelect, selecte
             <TouchableOpacity onPress={clearFilter} style={styles.clearButton}>
               <Text style={styles.clearText}>Clear</Text>
             </TouchableOpacity>
-          </LinearGradient>
+          </View>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.content}>
             <View style={styles.monthNavigation}>
               <TouchableOpacity onPress={goToPreviousMonth} style={styles.navButton}>
                 <Text style={styles.navIcon}>‹</Text>
@@ -184,108 +176,111 @@ export default function CalendarFilter({ visible, onClose, onDateSelect, selecte
             <View style={styles.calendar}>
               {renderCalendar()}
             </View>
-          </ScrollView>
-        </TouchableOpacity>
-      </TouchableOpacity>
+          </View>
+        </View>
+      </View>
     </Modal>
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
+    padding: Spacing.lg,
   },
   modalContainer: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.xl,
-    width: '100%',
-    maxHeight: '70%',
-    boxShadow: `0 10px 20px ${Colors.primary}4D`,
-    elevation: 20,
+    backgroundColor: colors.surface,
+    borderRadius: BorderRadius.lg,
+    width: '90%',
+    maxWidth: 380,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 16,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border + '40',
   },
   closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background,
   },
   closeIcon: {
-    fontSize: 16,
-    color: Colors.textPrimary,
-    fontFamily: Typography.fontFamily.medium,
+    fontSize: 18,
+    color: colors.textSecondary,
   },
   title: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   clearButton: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: BorderRadius.sm,
+    backgroundColor: colors.primary + '15',
   },
   clearText: {
-    fontSize: Typography.fontSizes.body,
+    fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.primary,
   },
   content: {
-    flex: 1,
+    padding: Spacing.lg,
   },
   monthNavigation: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+    paddingVertical: Spacing.sm,
   },
   navButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.surfaceElevated,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.primary + '15',
   },
   navIcon: {
-    fontSize: 20,
-    color: Colors.textPrimary,
+    fontSize: 24,
+    color: colors.primary,
     fontFamily: Typography.fontFamily.medium,
   },
   monthYearContainer: {
     alignItems: 'center',
+    flex: 1,
   },
   monthText: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.xs,
+    color: colors.textPrimary,
   },
   yearText: {
-    fontSize: Typography.fontSizes.body,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    fontSize: Typography.fontSizes.bodySmall,
+    fontFamily: Typography.fontFamily.regular,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   daysHeader: {
     flexDirection: 'row',
-    paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.xs,
   },
   dayHeaderCell: {
     flex: 1,
@@ -294,45 +289,54 @@ const styles = StyleSheet.create({
   },
   dayHeaderText: {
     fontSize: Typography.fontSizes.caption,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    fontFamily: Typography.fontFamily.bold,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
   },
   calendar: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.xs,
   },
   dayCell: {
-    width: '14.28%', // 100% / 7 days
-    aspectRatio: 0.8,
-    padding: 1,
+    width: '14.28%',
+    aspectRatio: 1,
+    padding: 3,
   },
   emptyDay: {
     flex: 1,
   },
   dayButton: {
     flex: 1,
-    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: BorderRadius.md,
+    backgroundColor: 'transparent',
   },
   todayButton: {
-    backgroundColor: Colors.accent + '30',
+    backgroundColor: colors.primary + '25',
+    borderWidth: 2,
+    borderColor: colors.primary,
   },
   selectedButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 4,
   },
   dayText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   todayText: {
-    color: Colors.accent,
+    color: colors.primary,
     fontFamily: Typography.fontFamily.bold,
   },
   selectedText: {
-    color: Colors.textPrimary,
+    color: colors.surface,
     fontFamily: Typography.fontFamily.bold,
   },
 })

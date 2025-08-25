@@ -12,7 +12,8 @@ import {
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { RootStackParamList } from '../navigation/AppNavigator'
 
 type NavigationProp = StackNavigationProp<RootStackParamList>
@@ -26,6 +27,7 @@ interface Feature {
 
 export default function PremiumUpgradeScreen() {
   const navigation = useNavigation<NavigationProp>()
+  const { colors } = useTheme()
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly')
   const [loading, setLoading] = useState(false)
 
@@ -167,10 +169,12 @@ export default function PremiumUpgradeScreen() {
     return value
   }
 
+  const styles = createStyles(colors)
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={[Colors.primary, Colors.secondary]}
+        colors={[colors.primary, colors.secondary]}
         style={styles.header}
       >
         <View style={styles.headerTop}>
@@ -366,7 +370,7 @@ export default function PremiumUpgradeScreen() {
           disabled={loading}
         >
           <LinearGradient
-            colors={[Colors.accent, Colors.primary]}
+            colors={[colors.accent, colors.primary]}
             style={styles.upgradeButtonGradient}
           >
             <Text style={styles.upgradeButtonText}>
@@ -386,10 +390,10 @@ export default function PremiumUpgradeScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: Spacing.lg,
@@ -417,13 +421,13 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   title: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   restoreButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -434,7 +438,7 @@ const styles = StyleSheet.create({
   restoreText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   heroSection: {
     alignItems: 'center',
@@ -443,13 +447,13 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: Typography.fontSizes.display,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   heroSubtitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     opacity: 0.8,
     textAlign: 'center',
   },
@@ -465,23 +469,23 @@ const styles = StyleSheet.create({
   },
   planOption: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     position: 'relative',
   },
   planOptionActive: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '10',
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '10',
   },
   discountBadge: {
     position: 'absolute',
     top: -8,
     right: -8,
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.sm,
@@ -489,33 +493,33 @@ const styles = StyleSheet.create({
   discountText: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   planTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   planTitleActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   planPrice: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   planPriceActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   planPeriod: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   planPeriodActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   featuresSection: {
     paddingHorizontal: Spacing.lg,
@@ -524,31 +528,31 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.lg,
   },
   featuresTable: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: colors.surfaceElevated,
     padding: Spacing.md,
   },
   tableHeaderText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   tableRow: {
     flexDirection: 'row',
     padding: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
     alignItems: 'center',
   },
   featureColumn: {
@@ -570,19 +574,19 @@ const styles = StyleSheet.create({
   featureName: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   featureValue: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     textAlign: 'center',
   },
   featureValueDisabled: {
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   featureValuePremium: {
-    color: Colors.success,
+    color: colors.success,
   },
   benefitsSection: {
     paddingHorizontal: Spacing.lg,
@@ -604,13 +608,13 @@ const styles = StyleSheet.create({
   benefitTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   benefitDescription: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: Typography.lineHeights.body,
   },
   testimonialsSection: {
@@ -618,17 +622,17 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   testimonial: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   testimonialText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontStyle: 'italic',
     lineHeight: Typography.lineHeights.body,
     marginBottom: Spacing.md,
@@ -636,7 +640,7 @@ const styles = StyleSheet.create({
   testimonialAuthor: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.primary,
+    color: colors.primary,
     textAlign: 'right',
   },
   guaranteeSection: {
@@ -647,14 +651,14 @@ const styles = StyleSheet.create({
   guaranteeTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.success,
+    color: colors.success,
     marginBottom: Spacing.sm,
     textAlign: 'center',
   },
   guaranteeText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: Typography.lineHeights.body,
   },
@@ -662,7 +666,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: colors.border,
   },
   upgradeButton: {
     marginBottom: Spacing.md,
@@ -675,19 +679,19 @@ const styles = StyleSheet.create({
   upgradeButtonText: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   upgradeButtonSubtext: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     opacity: 0.8,
   },
   footerNote: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
 })

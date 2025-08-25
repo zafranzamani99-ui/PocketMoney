@@ -1,5 +1,20 @@
-import Voice, { SpeechResultsEvent, SpeechErrorEvent } from '@react-native-voice/voice'
-import { Alert } from 'react-native'
+import { Alert, Platform } from 'react-native'
+
+let Voice: any = null
+let SpeechResultsEvent: any = null
+let SpeechErrorEvent: any = null
+
+// Safely import voice module
+try {
+  if (Platform.OS !== 'web') {
+    const VoiceModule = require('@react-native-voice/voice')
+    Voice = VoiceModule.default
+    SpeechResultsEvent = VoiceModule.SpeechResultsEvent
+    SpeechErrorEvent = VoiceModule.SpeechErrorEvent
+  }
+} catch (error) {
+  console.warn('Voice module not available in this environment:', error)
+}
 
 interface VoiceResult {
   command: 'expense' | 'income' | 'unknown'
@@ -16,6 +31,10 @@ class VoiceService {
   async initialize(): Promise<void> {
     if (this.isInitialized) return
 
+    if (!Voice) {
+      throw new Error('Voice recognition is not available in this environment. Please use a development build.')
+    }
+
     try {
       Voice.onSpeechStart = this.onSpeechStart.bind(this)
       Voice.onSpeechEnd = this.onSpeechEnd.bind(this)
@@ -30,6 +49,10 @@ class VoiceService {
   }
 
   async startListening(): Promise<void> {
+    if (!Voice) {
+      throw new Error('Voice recognition is not available in this environment. Please use a development build.')
+    }
+
     if (!this.isInitialized) {
       await this.initialize()
     }
@@ -48,6 +71,8 @@ class VoiceService {
   }
 
   async stopListening(): Promise<void> {
+    if (!Voice) return
+
     try {
       await Voice.stop()
       this.isListening = false
@@ -57,6 +82,8 @@ class VoiceService {
   }
 
   async destroy(): Promise<void> {
+    if (!Voice) return
+
     try {
       await Voice.destroy()
       this.isInitialized = false
@@ -237,6 +264,10 @@ class VoiceService {
 
   getIsListening(): boolean {
     return this.isListening
+  }
+
+  isVoiceAvailable(): boolean {
+    return Voice !== null
   }
 
   // Voice commands examples for user guidance

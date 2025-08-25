@@ -8,14 +8,18 @@ import {
   TextInput,
   Alert,
   Platform,
+  KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
 import { RootStackParamList } from '../navigation/AppNavigator'
 import { debugSupabase } from '../utils/debugSupabase'
+import { ButtonContainer, PrimaryButton, SecondaryButton } from '../components/buttons'
 
 type NavigationProp = StackNavigationProp<RootStackParamList>
 
@@ -28,7 +32,44 @@ interface BusinessProfile {
   website: string
 }
 
+// Create a scrollable container that works on all platforms
+const ScrollableContainer = ({ children }: { children: React.ReactNode }) => {
+  if (Platform.OS === 'web') {
+    return (
+      <div style={{
+        flex: 1,
+        overflow: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        height: '100%',
+        maxHeight: 'calc(100vh - 200px)'
+      }}>
+        {children}
+      </div>
+    )
+  } else {
+    return (
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          nestedScrollEnabled={true}
+        >
+          {children}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    )
+  }
+}
+
 export default function BusinessProfileScreen() {
+  const { colors } = useTheme()
   const navigation = useNavigation<NavigationProp>()
   const [loading, setLoading] = useState(false)
   const [profile, setProfile] = useState<BusinessProfile>({
@@ -220,39 +261,12 @@ export default function BusinessProfileScreen() {
     'Other',
   ]
 
-  // Create a scrollable container that works on all platforms
-  const ScrollableContainer = ({ children }: { children: React.ReactNode }) => {
-    if (Platform.OS === 'web') {
-      return (
-        <div style={{
-          flex: 1,
-          overflow: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          height: '100%',
-          maxHeight: 'calc(100vh - 200px)'
-        }}>
-          {children}
-        </div>
-      )
-    } else {
-      const { ScrollView } = require('react-native')
-      return (
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: 100 }}
-          showsVerticalScrollIndicator={true}
-          keyboardShouldPersistTaps="handled"
-        >
-          {children}
-        </ScrollView>
-      )
-    }
-  }
+  const styles = createStyles(colors)
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <LinearGradient
-        colors={[Colors.primary, Colors.secondary]}
+        colors={[colors.primary, colors.secondary]}
         style={styles.header}
       >
         <View style={styles.headerTop}>
@@ -260,9 +274,7 @@ export default function BusinessProfileScreen() {
             <Text style={styles.backIcon}>‹</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Business Profile</Text>
-          <TouchableOpacity onPress={saveProfile} style={styles.saveButton} disabled={loading}>
-            <Text style={styles.saveText}>{loading ? 'Saving...' : 'Save'}</Text>
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} />
         </View>
         
         <View style={styles.headerInfo}>
@@ -285,7 +297,7 @@ export default function BusinessProfileScreen() {
                 value={profile.business_name}
                 onChangeText={updateBusinessName}
                 placeholder="Enter your business name"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 returnKeyType="next"
                 blurOnSubmit={false}
               />
@@ -321,7 +333,7 @@ export default function BusinessProfileScreen() {
                 value={profile.phone}
                 onChangeText={updatePhone}
                 placeholder="+60 12-345-6789"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="phone-pad"
                 returnKeyType="next"
                 blurOnSubmit={false}
@@ -335,7 +347,7 @@ export default function BusinessProfileScreen() {
                 value={profile.email}
                 onChangeText={updateEmail}
                 placeholder="your@email.com"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="email-address"
                 returnKeyType="next"
                 blurOnSubmit={false}
@@ -350,7 +362,7 @@ export default function BusinessProfileScreen() {
                 value={profile.address}
                 onChangeText={updateAddress}
                 placeholder="Enter your business address"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
@@ -366,7 +378,7 @@ export default function BusinessProfileScreen() {
                 value={profile.website}
                 onChangeText={updateWebsite}
                 placeholder="www.yourbusiness.com"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="url"
                 returnKeyType="done"
                 autoCapitalize="none"
@@ -445,6 +457,22 @@ export default function BusinessProfileScreen() {
             </View>
           </View>
 
+          {/* Action Buttons */}
+          <View style={styles.section}>
+            <View style={styles.actionButtons}>
+              <SecondaryButton 
+                title="Cancel" 
+                onPress={() => navigation.goBack()}
+              />
+              <PrimaryButton 
+                title="Save Profile" 
+                onPress={saveProfile}
+                loading={loading}
+                disabled={!profile.business_name.trim()}
+              />
+            </View>
+          </View>
+
           {/* Extra spacing to ensure we can scroll to bottom */}
           <View style={styles.bottomSpacing} />
         </View>
@@ -453,14 +481,15 @@ export default function BusinessProfileScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.lg,
+    paddingTop: Spacing.xxl, // Add top padding to avoid notch
     borderBottomLeftRadius: BorderRadius.xl,
     borderBottomRightRadius: BorderRadius.xl,
   },
@@ -480,24 +509,16 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   title: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
-  saveButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.sm,
-  },
-  saveText: {
-    fontSize: Typography.fontSizes.body,
-    fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+  headerSpacer: {
+    width: 40, // Same width as backButton for symmetry
   },
   headerInfo: {
     alignItems: 'center',
@@ -505,13 +526,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   headerSubtitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     opacity: 0.8,
     textAlign: 'center',
   },
@@ -525,7 +546,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.lg,
   },
   inputGroup: {
@@ -534,18 +555,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   textArea: {
     height: 100,
@@ -557,47 +578,47 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   typeChip: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     marginBottom: Spacing.sm,
   },
   typeChipSelected: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   typeChipText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   typeChipTextSelected: {
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   hoursCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   hoursTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   hoursText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.xs,
   },
   editHoursButton: {
-    backgroundColor: Colors.primary + '20',
+    backgroundColor: colors.primary + '20',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
@@ -607,18 +628,18 @@ const styles = StyleSheet.create({
   editHoursText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.primary,
+    color: colors.primary,
   },
   settingItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: Spacing.lg,
     borderRadius: BorderRadius.md,
     marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   settingLeft: {
     flexDirection: 'row',
@@ -632,39 +653,43 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   settingDescription: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   chevron: {
     fontSize: Typography.fontSizes.subheading,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   tipCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   tipTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   tipText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: Typography.lineHeights.body,
     marginBottom: Spacing.sm,
   },
   bottomSpacing: {
     height: 100,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: Spacing.md,
   },
 })

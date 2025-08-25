@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
+
 import {
   View,
   Text,
@@ -14,7 +15,9 @@ import {
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
+
 import { RootStackParamList } from '../navigation/AppNavigator'
 
 type NavigationProp = StackNavigationProp<RootStackParamList>
@@ -37,6 +40,8 @@ export default function ContactSupportScreen() {
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const { colors }: any = useTheme()
+  const styles = useMemo(() => createStyles(colors), [colors])
 
   const categories = [
     { id: 'technical' as SupportCategory, label: 'Technical Issue', icon: '⚙️' },
@@ -171,7 +176,7 @@ export default function ContactSupportScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={[Colors.primary, Colors.secondary]}
+        colors={[colors.primary, colors.secondary]}
         style={styles.header}
       >
         <View style={styles.headerTop}>
@@ -261,7 +266,7 @@ export default function ContactSupportScreen() {
               <TextInput
                 style={styles.textInput}
                 placeholder="Brief description of your issue"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 value={subject}
                 onChangeText={setSubject}
                 maxLength={100}
@@ -273,7 +278,7 @@ export default function ContactSupportScreen() {
               <TextInput
                 style={[styles.textInput, styles.textArea]}
                 placeholder="Please describe your issue in detail. Include steps to reproduce if it's a bug."
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 value={message}
                 onChangeText={setMessage}
                 multiline
@@ -305,7 +310,7 @@ export default function ContactSupportScreen() {
             </View>
             <View style={styles.statusRow}>
               <Text style={styles.statusLabel}>System Status:</Text>
-              <Text style={[styles.statusValue, { color: Colors.success }]}>✅ All Systems Operational</Text>
+              <Text style={[styles.statusValue, { color: colors.success }]}>✅ All Systems Operational</Text>
             </View>
             <View style={styles.statusRow}>
               <Text style={styles.statusLabel}>Support Hours:</Text>
@@ -359,10 +364,10 @@ export default function ContactSupportScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: Spacing.lg,
@@ -377,8 +382,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: Platform.OS === 'ios' ? Spacing.lg : Spacing.md,
     marginBottom: Spacing.lg,
-    marginTop: Spacing.md,
-    marginBottom: Spacing.lg,
   },
   backButton: {
     width: 40,
@@ -390,16 +393,16 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   title: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   urgentButton: {
-    backgroundColor: Colors.error,
+    backgroundColor: colors.error,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
@@ -407,7 +410,7 @@ const styles = StyleSheet.create({
   urgentText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   headerInfo: {
     alignItems: 'center',
@@ -415,13 +418,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   headerSubtitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     opacity: 0.8,
     textAlign: 'center',
   },
@@ -438,18 +441,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.lg,
   },
   supportOption: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   supportOptionDisabled: {
     opacity: 0.6,
@@ -469,11 +472,11 @@ const styles = StyleSheet.create({
   supportTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     flex: 1,
   },
   comingSoonBadge: {
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
     borderRadius: BorderRadius.sm,
@@ -482,29 +485,29 @@ const styles = StyleSheet.create({
   comingSoonText: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   supportDescription: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.xs,
   },
   supportResponseTime: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   supportChevron: {
     fontSize: Typography.fontSizes.subheading,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   ticketForm: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   categorySection: {
     marginBottom: Spacing.lg,
@@ -512,26 +515,26 @@ const styles = StyleSheet.create({
   formLabel: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   categoryFilter: {
     marginBottom: Spacing.sm,
   },
   categoryButton: {
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: colors.surfaceElevated,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
     marginRight: Spacing.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
   },
   categoryButtonActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   categoryIcon: {
     fontSize: 16,
@@ -540,23 +543,23 @@ const styles = StyleSheet.create({
   categoryButtonText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   categoryButtonTextActive: {
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   formField: {
     marginBottom: Spacing.lg,
   },
   textInput: {
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   textArea: {
     height: 120,
@@ -565,12 +568,12 @@ const styles = StyleSheet.create({
   charCount: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'right',
     marginTop: Spacing.xs,
   },
   submitButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
@@ -581,19 +584,19 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   statusCard: {
-    backgroundColor: Colors.success + '10',
+    backgroundColor: colors.success + '10',
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.success + '30',
+    borderColor: colors.success + '30',
   },
   statusTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   statusRow: {
@@ -605,20 +608,20 @@ const styles = StyleSheet.create({
   statusLabel: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   statusValue: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   tipCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     flexDirection: 'row',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   tipIcon: {
     fontSize: 24,
@@ -630,7 +633,7 @@ const styles = StyleSheet.create({
   tipTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   tipsList: {
@@ -639,27 +642,27 @@ const styles = StyleSheet.create({
   tip: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: Typography.lineHeights.body,
   },
   emergencyCard: {
-    backgroundColor: Colors.error + '10',
+    backgroundColor: colors.error + '10',
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.error + '30',
+    borderColor: colors.error + '30',
   },
   emergencyTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.error,
+    color: colors.error,
     marginBottom: Spacing.sm,
     textAlign: 'center',
   },
   emergencyText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
@@ -669,22 +672,22 @@ const styles = StyleSheet.create({
   },
   emergencyButton: {
     flex: 1,
-    backgroundColor: Colors.error,
+    backgroundColor: colors.error,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     alignItems: 'center',
   },
   emergencyButtonSecondary: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.error,
+    borderColor: colors.error,
   },
   emergencyButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   emergencyButtonTextSecondary: {
-    color: Colors.error,
+    color: colors.error,
   },
 })

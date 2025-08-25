@@ -9,7 +9,8 @@ import {
   Alert,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 
 interface TransactionDetailProps {
   route: {
@@ -33,6 +34,7 @@ interface TransactionDetailProps {
 }
 
 export default function TransactionDetailScreen({ route, navigation }: TransactionDetailProps) {
+  const { colors } = useTheme()
   const { transaction } = route.params
 
   const handleEdit = () => {
@@ -75,6 +77,7 @@ export default function TransactionDetailScreen({ route, navigation }: Transacti
   }
 
   const { date, time } = formatDateTime(transaction.date, transaction.time)
+  const styles = createStyles(colors)
 
   return (
     <SafeAreaView style={styles.container}>
@@ -93,7 +96,7 @@ export default function TransactionDetailScreen({ route, navigation }: Transacti
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <LinearGradient
-          colors={transaction.type === 'income' ? [Colors.success + '20', Colors.success + '10'] : [Colors.error + '20', Colors.error + '10']}
+          colors={transaction.type === 'income' ? [colors.success + '20', colors.success + '10'] : [colors.error + '20', colors.error + '10']}
           style={styles.amountCard}
         >
           <Text style={styles.amountLabel}>
@@ -101,7 +104,7 @@ export default function TransactionDetailScreen({ route, navigation }: Transacti
           </Text>
           <Text style={[
             styles.amountValue,
-            { color: transaction.type === 'income' ? Colors.success : Colors.error }
+            { color: transaction.type === 'income' ? colors.success : colors.error }
           ]}>
             {transaction.type === 'income' ? '+' : '-'}RM {transaction.amount.toFixed(2)}
           </Text>
@@ -175,10 +178,10 @@ export default function TransactionDetailScreen({ route, navigation }: Transacti
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -187,31 +190,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
   backIcon: {
     fontSize: 24,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   title: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   editButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -227,12 +230,12 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   amountLabel: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.sm,
   },
   amountValue: {
@@ -244,18 +247,18 @@ const styles = StyleSheet.create({
     fontSize: 32,
   },
   detailsCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   sectionTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.lg,
   },
   detailRow: {
@@ -268,18 +271,18 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     flex: 1,
   },
   detailValue: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     flex: 2,
     textAlign: 'right',
   },
   categoryBadge: {
-    backgroundColor: Colors.primary + '20',
+    backgroundColor: colors.primary + '20',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
@@ -287,21 +290,21 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.primary,
+    color: colors.primary,
   },
   receiptCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   receiptButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: colors.surfaceElevated,
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
     justifyContent: 'center',
@@ -313,21 +316,21 @@ const styles = StyleSheet.create({
   receiptText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   deleteButton: {
-    backgroundColor: Colors.error + '20',
+    backgroundColor: colors.error + '20',
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.xl,
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.error + '40',
+    borderColor: colors.error + '40',
   },
   deleteText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.error,
+    color: colors.error,
     textAlign: 'center',
   },
 })

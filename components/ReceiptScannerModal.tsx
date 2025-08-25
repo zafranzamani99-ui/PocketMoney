@@ -13,7 +13,8 @@ import {
 import { CameraView, CameraType, FlashMode, useCameraPermissions } from 'expo-camera'
 import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
 
 interface ReceiptScannerModalProps {
@@ -23,6 +24,7 @@ interface ReceiptScannerModalProps {
 }
 
 export default function ReceiptScannerModal({ visible, onClose, onSuccess }: ReceiptScannerModalProps) {
+  const { colors } = useTheme()
   const [permission, requestPermission] = useCameraPermissions()
   const [facing, setFacing] = useState<CameraType>('back')
   const [flash, setFlash] = useState<FlashMode>('off')
@@ -176,6 +178,8 @@ export default function ReceiptScannerModal({ visible, onClose, onSuccess }: Rec
     onClose()
   }
 
+  const styles = createStyles(colors)
+
   if (!permission) {
     return null
   }
@@ -229,7 +233,7 @@ export default function ReceiptScannerModal({ visible, onClose, onSuccess }: Rec
                   disabled={processing}
                 >
                   {processing ? (
-                    <ActivityIndicator color={Colors.textPrimary} />
+                    <ActivityIndicator color={colors.textPrimary} />
                   ) : (
                     <Text style={[styles.actionButtonText, styles.primaryButtonText]}>
                       🔍 Process
@@ -283,10 +287,10 @@ export default function ReceiptScannerModal({ visible, onClose, onSuccess }: Rec
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -295,32 +299,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   title: {
     fontSize: Typography.fontSizes.subheading,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   headerButton: {
     fontSize: Typography.fontSizes.subheading,
-    color: Colors.primary,
+    color: colors.primary,
   },
   permissionContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     paddingHorizontal: Spacing.lg,
   },
   permissionText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: Spacing.xl,
   },
   permissionButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
@@ -328,7 +332,7 @@ const styles = StyleSheet.create({
   },
   permissionButtonText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontWeight: Typography.fontWeights.medium,
   },
   cancelButton: {
@@ -336,7 +340,7 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   cameraContainer: {
     flex: 1,
@@ -355,7 +359,7 @@ const styles = StyleSheet.create({
   },
   guideText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     textAlign: 'center',
     backgroundColor: 'rgba(0,0,0,0.7)',
     paddingHorizontal: Spacing.lg,
@@ -367,7 +371,7 @@ const styles = StyleSheet.create({
     width: 250,
     height: 300,
     borderWidth: 2,
-    borderColor: Colors.primary,
+    borderColor: colors.primary,
     borderRadius: BorderRadius.md,
     backgroundColor: 'transparent',
   },
@@ -377,17 +381,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   controlButton: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   controlButtonText: {
     fontSize: 20,
@@ -396,7 +400,7 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -404,7 +408,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: Colors.textPrimary,
+    backgroundColor: colors.textPrimary,
   },
   previewContainer: {
     flex: 1,
@@ -426,23 +430,23 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   primaryButton: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   actionButtonText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: Typography.fontWeights.medium,
   },
   primaryButtonText: {
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
 })

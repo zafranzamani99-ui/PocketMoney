@@ -13,7 +13,8 @@ import {
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
 import { RootStackParamList } from '../navigation/AppNavigator'
 
@@ -35,6 +36,7 @@ interface NotificationSettings {
 
 export default function NotificationSettingsScreen() {
   const navigation = useNavigation<NavigationProp>()
+  const { colors } = useTheme()
   const [loading, setLoading] = useState(false)
   const [settings, setSettings] = useState<NotificationSettings>({
     push_enabled: true,
@@ -178,10 +180,12 @@ export default function NotificationSettingsScreen() {
     },
   ]
 
+  const styles = createStyles(colors)
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={[Colors.primary, Colors.secondary]}
+        colors={[colors.primary, colors.secondary]}
         style={styles.header}
       >
         <View style={styles.headerTop}>
@@ -214,8 +218,8 @@ export default function NotificationSettingsScreen() {
             <Switch
               value={settings.push_enabled}
               onValueChange={(value) => updateSetting('push_enabled', value)}
-              trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-              thumbColor={settings.push_enabled ? Colors.primary : Colors.textSecondary}
+              trackColor={{ false: colors.border, true: colors.primary + '50' }}
+              thumbColor={settings.push_enabled ? colors.primary : colors.textSecondary}
             />
           </View>
         </View>
@@ -244,8 +248,8 @@ export default function NotificationSettingsScreen() {
                       <Switch
                         value={setting.enabled}
                         onValueChange={(value) => updateSetting(setting.key, value)}
-                        trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                        thumbColor={setting.enabled ? Colors.primary : Colors.textSecondary}
+                        trackColor={{ false: colors.border, true: colors.primary + '50' }}
+                        thumbColor={setting.enabled ? colors.primary : colors.textSecondary}
                       />
                     </View>
                   ))}
@@ -270,8 +274,8 @@ export default function NotificationSettingsScreen() {
                   <Switch
                     value={settings.quiet_hours_enabled}
                     onValueChange={(value) => updateSetting('quiet_hours_enabled', value)}
-                    trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                    thumbColor={settings.quiet_hours_enabled ? Colors.primary : Colors.textSecondary}
+                    trackColor={{ false: colors.border, true: colors.primary + '50' }}
+                    thumbColor={settings.quiet_hours_enabled ? colors.primary : colors.textSecondary}
                   />
                 </View>
 
@@ -354,10 +358,10 @@ export default function NotificationSettingsScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: Spacing.lg,
@@ -383,13 +387,13 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   title: {
     fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   testButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -400,7 +404,7 @@ const styles = StyleSheet.create({
   testText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   headerInfo: {
     alignItems: 'center',
@@ -408,13 +412,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   headerSubtitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     opacity: 0.8,
     textAlign: 'center',
   },
@@ -426,14 +430,14 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.lg,
   },
   masterToggle: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: Colors.primary + '30',
+    borderColor: colors.primary + '30',
   },
   masterToggleInfo: {
     flex: 1,
@@ -442,13 +446,13 @@ const styles = StyleSheet.create({
   masterToggleTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   masterToggleDescription: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   categoryHeader: {
     flexDirection: 'row',
@@ -462,13 +466,13 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   settingsCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     overflow: 'hidden',
   },
   settingItem: {
@@ -477,7 +481,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   settingItemLast: {
     borderBottomWidth: 0,
@@ -489,19 +493,19 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   settingDescription: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: Typography.lineHeights.body,
   },
   timeSettings: {
     padding: Spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: colors.border,
     gap: Spacing.md,
   },
   timeSettingRow: {
@@ -512,32 +516,32 @@ const styles = StyleSheet.create({
   timeLabel: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   timeButton: {
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: colors.surfaceElevated,
     borderRadius: BorderRadius.sm,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   timeText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   infoCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   infoTitle: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   tipsList: {
@@ -546,20 +550,20 @@ const styles = StyleSheet.create({
   tip: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: Typography.lineHeights.body,
   },
   resetButton: {
-    backgroundColor: Colors.error + '20',
+    backgroundColor: colors.error + '20',
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.error + '40',
+    borderColor: colors.error + '40',
   },
   resetButtonText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.error,
+    color: colors.error,
   },
 })

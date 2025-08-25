@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
   Text,
@@ -8,9 +8,15 @@ import {
   TextInput,
   ScrollView,
   Alert,
+  Animated,
+  PanResponder,
+  Dimensions,
 } from 'react-native'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { supabase } from '../lib/supabase'
+import { PrimaryButton, SecondaryButton } from './buttons'
 
 interface AddExpenseModalProps {
   visible: boolean
@@ -41,6 +47,8 @@ interface Wallet {
 }
 
 export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpenseModalProps) {
+  const { colors }: any = useTheme()
+  const insets = useSafeAreaInsets()
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
@@ -48,9 +56,68 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
   const [loading, setLoading] = useState(false)
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [walletsLoading, setWalletsLoading] = useState(false)
+  const windowHeight = Dimensions.get('window').height
+  const COLLAPSED_HEIGHT = 380
+  const EXPANDED_HEIGHT = windowHeight // no gap
+  const sheetHeight = useRef(new Animated.Value(EXPANDED_HEIGHT)).current
+  const gestureStartHeight = useRef(EXPANDED_HEIGHT)
+  const [expanded, setExpanded] = useState(true)
+
+  const snapTo = (toHeight: number) => {
+    Animated.spring(sheetHeight, {
+      toValue: toHeight,
+      useNativeDriver: false,
+      tension: 120,
+      friction: 18,
+    }).start()
+    setExpanded(toHeight > (COLLAPSED_HEIGHT + (EXPANDED_HEIGHT - COLLAPSED_HEIGHT) / 2))
+  }
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_evt, gesture) => (
+        Math.abs(gesture.dy) > 6 && Math.abs(gesture.dy) > Math.abs(gesture.dx)
+      ),
+      onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponderCapture: () => false,
+      onMoveShouldSetPanResponderCapture: (_evt, gesture) => (
+        Math.abs(gesture.dy) > 6 && Math.abs(gesture.dy) > Math.abs(gesture.dx)
+      ),
+      onPanResponderGrant: () => {
+        // @ts-ignore read current value
+        sheetHeight.stopAnimation((v: number) => {
+          gestureStartHeight.current = v
+        })
+      },
+      onPanResponderMove: (_evt, gesture) => {
+        const next = Math.max(
+          COLLAPSED_HEIGHT,
+          Math.min(EXPANDED_HEIGHT, gestureStartHeight.current - gesture.dy)
+        )
+        sheetHeight.setValue(next)
+      },
+      onPanResponderRelease: (_evt, gesture) => {
+        const current = gestureStartHeight.current - gesture.dy
+        const goingDown = gesture.vy > 0.2 || (gesture.dy > 120 && gesture.vy >= 0)
+        const goingUp = gesture.vy < -0.2 || (gesture.dy < -120 && gesture.vy <= 0)
+        if (goingDown) {
+          snapTo(COLLAPSED_HEIGHT)
+        } else if (goingUp) {
+          snapTo(EXPANDED_HEIGHT)
+        } else {
+          // snap to nearest
+          const mid = (COLLAPSED_HEIGHT + EXPANDED_HEIGHT) / 2
+          snapTo(current < mid ? EXPANDED_HEIGHT : COLLAPSED_HEIGHT)
+        }
+      },
+    })
+  ).current
 
   useEffect(() => {
     if (visible) {
+      // reset to expanded with no gap
+      sheetHeight.setValue(EXPANDED_HEIGHT)
+      setExpanded(true)
       loadWallets()
     }
   }, [visible])
@@ -184,169 +251,242 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
     onClose()
   }
 
-  return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleClose}>
-            <Text style={styles.cancelButton}>Cancel</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Add Expense</Text>
-          <TouchableOpacity onPress={handleSave} disabled={loading}>
-            <Text style={[styles.saveButton, loading && styles.disabledButton]}>
-              {loading ? 'Saving...' : 'Save'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+  const styles = createStyles(colors)
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.amountSection}>
-            <Text style={styles.sectionLabel}>Amount</Text>
-            <View style={styles.amountDisplay}>
-              <Text style={styles.currency}>RM</Text>
-              <Text style={styles.amountText}>{amount || '0'}</Text>
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" transparent>
+      <View style={styles.overlay}>
+        {/* Backdrop to close when tapping outside */}
+        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
+
+        {/* Bottom Sheet */}
+        <Animated.View style={[styles.sheet, expanded ? styles.sheetFull : styles.sheetRounded, { height: sheetHeight }]}>
+          <SafeAreaView style={styles.sheetInner} edges={['bottom']}>
+          {/* Handle (draggable area) */}
+          <View style={styles.handleRow} {...panResponder.panHandlers}>
+            <View style={styles.handleBg}>
+              <View style={styles.handle} />
             </View>
           </View>
+          <View style={styles.header} {...panResponder.panHandlers}>
+            <TouchableOpacity onPress={handleClose} style={styles.backButton}>
+              <Text style={styles.backIcon}>‹</Text>
+            </TouchableOpacity>
+            <Text style={styles.title}>Add Expense</Text>
+            <View style={styles.headerSpacer} />
+          </View>
 
-          <View style={styles.calculator}>
-            {calculatorButtons.map((row, rowIndex) => (
-              <View key={rowIndex} style={styles.calculatorRow}>
-                {row.map((button) => (
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            <View style={styles.amountSection}>
+              <Text style={styles.sectionLabel}>Amount</Text>
+              <View style={styles.amountDisplay}>
+                <Text style={styles.currency}>RM</Text>
+                <Text style={styles.amountText}>{amount || '0'}</Text>
+              </View>
+            </View>
+
+            <View style={styles.calculator}>
+              {calculatorButtons.map((row, rowIndex) => (
+                <View key={rowIndex} style={styles.calculatorRow}>
+                  {row.map((button) => (
+                    <TouchableOpacity
+                      key={button}
+                      style={[
+                        styles.calculatorButton,
+                        button === '=' && styles.equalsButton,
+                        ['C', '⌫', '%', '÷', '×', '-', '+'].includes(button) && styles.operatorButton,
+                      ]}
+                      onPress={() => handleCalculatorPress(button)}
+                    >
+                      <Text style={[
+                        styles.calculatorButtonText,
+                        button === '=' && styles.equalsButtonText,
+                        ['C', '⌫', '%', '÷', '×', '-', '+'].includes(button) && styles.operatorButtonText,
+                      ]}>
+                        {button}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Description (Optional)</Text>
+              <TextInput
+                style={styles.descriptionInput}
+                value={description}
+                onChangeText={setDescription}
+                placeholder="What did you buy?"
+                placeholderTextColor={colors.textSecondary}
+                multiline
+              />
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Category</Text>
+              <View style={styles.categoryGrid}>
+                {categories.map((category) => (
                   <TouchableOpacity
-                    key={button}
+                    key={category}
                     style={[
-                      styles.calculatorButton,
-                      button === '=' && styles.equalsButton,
-                      ['C', '⌫', '%', '÷', '×', '-', '+'].includes(button) && styles.operatorButton,
+                      styles.categoryButton,
+                      selectedCategory === category && styles.categoryButtonSelected,
                     ]}
-                    onPress={() => handleCalculatorPress(button)}
+                    onPress={() => setSelectedCategory(category)}
                   >
                     <Text style={[
-                      styles.calculatorButtonText,
-                      button === '=' && styles.equalsButtonText,
-                      ['C', '⌫', '%', '÷', '×', '-', '+'].includes(button) && styles.operatorButtonText,
+                      styles.categoryButtonText,
+                      selectedCategory === category && styles.categoryButtonTextSelected,
                     ]}>
-                      {button}
+                      {category}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
-            ))}
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Description (Optional)</Text>
-            <TextInput
-              style={styles.descriptionInput}
-              value={description}
-              onChangeText={setDescription}
-              placeholder="What did you buy?"
-              placeholderTextColor={Colors.textSecondary}
-              multiline
-            />
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Category</Text>
-            <View style={styles.categoryGrid}>
-              {categories.map((category) => (
-                <TouchableOpacity
-                  key={category}
-                  style={[
-                    styles.categoryButton,
-                    selectedCategory === category && styles.categoryButtonSelected,
-                  ]}
-                  onPress={() => setSelectedCategory(category)}
-                >
-                  <Text style={[
-                    styles.categoryButtonText,
-                    selectedCategory === category && styles.categoryButtonTextSelected,
-                  ]}>
-                    {category}
-                  </Text>
-                </TouchableOpacity>
-              ))}
             </View>
-          </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Wallet</Text>
-            {walletsLoading ? (
-              <View style={styles.loadingContainer}>
-                <Text style={styles.loadingText}>Loading wallets...</Text>
-              </View>
-            ) : (
-              <View style={styles.walletList}>
-                {wallets.map((wallet) => (
-                  <TouchableOpacity
-                    key={wallet.id}
-                    style={[
-                      styles.walletButton,
-                      selectedWallet === wallet.id && styles.walletButtonSelected,
-                    ]}
-                    onPress={() => setSelectedWallet(wallet.id)}
-                  >
-                    <View style={styles.walletInfo}>
-                      <Text style={styles.walletEmoji}>
-                        {wallet.type === 'cash' ? '💵' : 
-                         wallet.type === 'bank' ? '🏦' : 
-                         wallet.type === 'credit' ? '💳' : '📱'}
-                      </Text>
-                      <View>
-                        <Text style={styles.walletName}>{wallet.name}</Text>
-                        <Text style={styles.walletBalance}>RM {wallet.balance.toFixed(2)}</Text>
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Wallet</Text>
+              {walletsLoading ? (
+                <View style={styles.loadingContainer}>
+                  <Text style={styles.loadingText}>Loading wallets...</Text>
+                </View>
+              ) : (
+                <View style={styles.walletList}>
+                  {wallets.map((wallet) => (
+                    <TouchableOpacity
+                      key={wallet.id}
+                      style={[
+                        styles.walletButton,
+                        selectedWallet === wallet.id && styles.walletButtonSelected,
+                      ]}
+                      onPress={() => setSelectedWallet(wallet.id)}
+                    >
+                      <View style={styles.walletInfo}>
+                        <Text style={styles.walletEmoji}>
+                          {wallet.type === 'cash' ? '💵' : 
+                           wallet.type === 'bank' ? '🏦' : 
+                           wallet.type === 'credit' ? '💳' : '📱'}
+                        </Text>
+                        <View>
+                          <Text style={styles.walletName}>{wallet.name}</Text>
+                          <Text style={styles.walletBalance}>RM {wallet.balance.toFixed(2)}</Text>
+                        </View>
                       </View>
+                      {selectedWallet === wallet.id && (
+                        <Text style={styles.walletCheck}>✓</Text>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                  {wallets.length === 0 && (
+                    <View style={styles.emptyWallets}>
+                      <Text style={styles.emptyWalletsText}>No wallets found</Text>
+                      <Text style={styles.emptyWalletsSubtext}>Please add a wallet first</Text>
                     </View>
-                    {selectedWallet === wallet.id && (
-                      <Text style={styles.walletCheck}>✓</Text>
-                    )}
-                  </TouchableOpacity>
-                ))}
-                {wallets.length === 0 && (
-                  <View style={styles.emptyWallets}>
-                    <Text style={styles.emptyWalletsText}>No wallets found</Text>
-                    <Text style={styles.emptyWalletsSubtext}>Please add a wallet first</Text>
-                  </View>
-                )}
+                  )}
+                </View>
+              )}
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.section}>
+              <View style={styles.actionButtons}>
+                <SecondaryButton 
+                  title="Cancel" 
+                  onPress={handleClose}
+                />
+                <PrimaryButton 
+                  title={loading ? 'Saving...' : 'Save'} 
+                  onPress={handleSave}
+                  loading={loading}
+                  disabled={!amount || !selectedCategory}
+                />
               </View>
-            )}
-          </View>
-        </ScrollView>
+            </View>
+          </ScrollView>
+          </SafeAreaView>
+        </Animated.View>
       </View>
     </Modal>
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
+const createStyles = (colors: any) => StyleSheet.create({
+  overlay: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject as any,
+  },
+  sheet: {
+    backgroundColor: colors.background,
+    overflow: 'hidden',
+    width: '100%',
+    alignSelf: 'stretch',
+  },
+  sheetRounded: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  sheetFull: {
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+  },
+  sheetInner: {
+    flex: 1,
+  },
+  handleRow: {
+    alignItems: 'center',
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.xs,
+  },
+  handle: {
+    width: 92,
+    height: 10,
+    borderRadius: 6,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.65)',
+  },
+  handleBg: {
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    borderRadius: 14,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingBottom: Spacing.md,
+    paddingTop: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   title: {
     fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
-  cancelButton: {
-    fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  saveButton: {
-    fontSize: Typography.fontSizes.body,
-    color: Colors.primary,
+  backIcon: {
+    fontSize: 24,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
-  disabledButton: {
-    opacity: 0.5,
+  headerSpacer: {
+    width: 40, // Same width as back button for symmetry
   },
   content: {
     flex: 1,
@@ -359,7 +499,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.medium,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.md,
   },
   amountDisplay: {
@@ -368,13 +508,13 @@ const styles = StyleSheet.create({
   },
   currency: {
     fontSize: Typography.fontSizes.heading,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginRight: Spacing.sm,
   },
   amountText: {
     fontSize: Typography.fontSizes.heading * 1.5,
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     minWidth: 100,
   },
   calculator: {
@@ -388,42 +528,42 @@ const styles = StyleSheet.create({
   calculatorButton: {
     flex: 1,
     height: 60,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   operatorButton: {
-    backgroundColor: Colors.primary + '20',
-    borderColor: Colors.primary + '40',
+    backgroundColor: colors.primary + '20',
+    borderColor: colors.primary + '40',
   },
   equalsButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   calculatorButtonText: {
     fontSize: Typography.fontSizes.subheading,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   operatorButtonText: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   equalsButtonText: {
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   section: {
     marginBottom: Spacing.xl,
   },
   descriptionInput: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     minHeight: 80,
     textAlignVertical: 'top',
   },
@@ -437,20 +577,20 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     marginBottom: Spacing.sm,
   },
   categoryButtonSelected: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   categoryButtonText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   categoryButtonTextSelected: {
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },
   walletList: {
@@ -460,15 +600,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   walletButtonSelected: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '10',
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '10',
   },
   walletInfo: {
     flexDirection: 'row',
@@ -480,18 +620,18 @@ const styles = StyleSheet.create({
   },
   walletName: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
     marginBottom: Spacing.xs,
   },
   walletCheck: {
     fontSize: Typography.fontSizes.subheading,
-    color: Colors.primary,
+    color: colors.primary,
     fontFamily: Typography.fontFamily.bold,
   },
   walletBalance: {
     fontSize: Typography.fontSizes.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontFamily: Typography.fontFamily.regular,
   },
   loadingContainer: {
@@ -500,7 +640,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontFamily: Typography.fontFamily.regular,
   },
   emptyWallets: {
@@ -509,14 +649,18 @@ const styles = StyleSheet.create({
   },
   emptyWalletsText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontFamily: Typography.fontFamily.medium,
     marginBottom: Spacing.xs,
   },
   emptyWalletsSubtext: {
     fontSize: Typography.fontSizes.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontFamily: Typography.fontFamily.regular,
     textAlign: 'center',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: Spacing.md,
   },
 })

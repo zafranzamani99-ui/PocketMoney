@@ -9,7 +9,8 @@ import {
   Alert,
   Animated,
 } from 'react-native'
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme'
+import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
+import { useTheme } from '../contexts/ThemeContext.js'
 import { voiceService, VoiceResult } from '../services/voiceService'
 
 interface VoiceInputModalProps {
@@ -19,6 +20,7 @@ interface VoiceInputModalProps {
 }
 
 export default function VoiceInputModal({ visible, onClose, onResult }: VoiceInputModalProps) {
+  const { colors } = useTheme()
   const [isListening, setIsListening] = useState(false)
   const [pulseAnim] = useState(new Animated.Value(1))
   const [lastResult, setLastResult] = useState<VoiceResult | null>(null)
@@ -147,6 +149,8 @@ export default function VoiceInputModal({ visible, onClose, onResult }: VoiceInp
 
   const examples = voiceService.getExampleCommands()
 
+  const styles = createStyles(colors)
+
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <View style={styles.container}>
@@ -267,10 +271,10 @@ export default function VoiceInputModal({ visible, onClose, onResult }: VoiceInp
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -279,16 +283,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   title: {
     fontSize: Typography.fontSizes.subheading,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   cancelButton: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   placeholder: {
     width: 50,
@@ -308,22 +312,22 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 3,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
   micButtonActive: {
-    backgroundColor: Colors.primary + '20',
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary + '20',
+    borderColor: colors.primary,
   },
   micIcon: {
     fontSize: 48,
   },
   statusText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
@@ -334,15 +338,15 @@ const styles = StyleSheet.create({
   resultTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   resultCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     width: '100%',
   },
   resultRow: {
@@ -353,28 +357,28 @@ const styles = StyleSheet.create({
   },
   resultLabel: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: Typography.fontWeights.medium,
   },
   resultValue: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontWeight: Typography.fontWeights.bold,
     flex: 1,
     textAlign: 'right',
   },
   tipsSection: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginBottom: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   tipsTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   tipsList: {
@@ -382,7 +386,7 @@ const styles = StyleSheet.create({
   },
   tipItem: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 22,
   },
   examplesSection: {
@@ -394,36 +398,36 @@ const styles = StyleSheet.create({
   exampleCategoryTitle: {
     fontSize: Typography.fontSizes.body,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   exampleList: {
     gap: Spacing.sm,
   },
   exampleItem: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.sm,
     padding: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   exampleText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontStyle: 'italic',
   },
   languageSection: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginBottom: Spacing.xl,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   languageTitle: {
     fontSize: Typography.fontSizes.subheading,
     fontWeight: Typography.fontWeights.bold,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   languageList: {
@@ -440,6 +444,6 @@ const styles = StyleSheet.create({
   },
   languageText: {
     fontSize: Typography.fontSizes.body,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
 })
