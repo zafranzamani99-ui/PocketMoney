@@ -342,10 +342,13 @@ export default function DashboardScreen() {
   const styles = createStyles(colors)
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <ScrollView 
         style={styles.scrollView} 
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -616,13 +619,14 @@ const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    width: '100%',
   },
   scrollView: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   contentContainer: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   tabletContainer: {
     maxWidth: isTablet ? '95%' : 1200,
@@ -635,7 +639,8 @@ const createStyles = (colors: any) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     padding: isTablet ? Spacing.xl : Spacing.lg,
-    paddingBottom: isTablet ? Spacing.lg : Spacing.md,
+    paddingBottom: isTablet ? Spacing.xl : Spacing.md,
+    marginTop: Spacing.xxl, 
   },
   headerLeft: {
     flex: 1,
@@ -862,7 +867,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   recentTransactions: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xl,
+    paddingBottom: Platform.OS === 'ios' ? 100 : Spacing.xl,
   },
   sectionHeader: {
     flexDirection: 'row',

@@ -34,6 +34,10 @@ interface BusinessProfile {
 
 // Create a scrollable container that works on all platforms
 const ScrollableContainer = ({ children }: { children: React.ReactNode }) => {
+  const scrollContentStyle = {
+    paddingBottom: Platform.OS === 'ios' ? 34 : 0, // Space for home indicator
+  }
+
   if (Platform.OS === 'web') {
     return (
       <div style={{
@@ -55,7 +59,7 @@ const ScrollableContainer = ({ children }: { children: React.ReactNode }) => {
       >
         <ScrollView 
           contentInsetAdjustmentBehavior="never"
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={scrollContentStyle}
           style={{ flex: 1 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -487,9 +491,6 @@ const createStyles = (colors: any) => StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  scrollContent: {
-    paddingBottom: Platform.OS === 'ios' ? 34 : 0, // Space for home indicator
-  },
   header: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg, // Reduced padding - SafeAreaView handles notch/Dynamic Island
@@ -502,7 +503,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing.md,
-    marginTop: Spacing.lg, // Push title down
+    marginTop: Spacing.xl, // Push title down
   },
   backButton: {
     width: 40,
@@ -691,7 +692,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   bottomSpacing: {
-    height: 100,
+    height: 0,
   },
   actionButtons: {
     flexDirection: 'row',

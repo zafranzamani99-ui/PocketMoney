@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   Modal,
   Platform,
   KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
@@ -38,7 +40,7 @@ interface OrderItem {
 }
 
 // Create a scrollable container that works on all platforms
-const ScrollableContainer = ({ children }: { children: React.ReactNode }) => {
+const ScrollableContainer = ({ children, scrollViewRef }: { children: React.ReactNode, scrollViewRef?: React.RefObject<ScrollView> }) => {
   if (Platform.OS === 'web') {
     return (
       <div style={{
@@ -56,14 +58,17 @@ const ScrollableContainer = ({ children }: { children: React.ReactNode }) => {
       <KeyboardAvoidingView 
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        enabled={true}
       >
         <ScrollView
+          ref={scrollViewRef}
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: 40 }}
+          contentContainerStyle={{ paddingBottom: 0 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"
+          keyboardDismissMode="on-drag"
+          enableOnAndroid={true}
         >
           {children}
         </ScrollView>
@@ -76,23 +81,23 @@ export default function AddOrderScreen() {
   const navigation = useNavigation<NavigationProp>()
   const { colors } = useTheme()
   const styles = createStyles(colors)
+  
+  // Refs for input navigation
+  const priceInputRef = useRef<TextInput>(null)
+  const quantityInputRef = useRef<TextInput>(null)
+  const notesInputRef = useRef<TextInput>(null)
+  const scrollViewRef = useRef<ScrollView>(null)
   const [loading, setLoading] = useState(false)
-  const [customers, setCustomers] = useState<Customer[]>([])
-  const [showCustomerModal, setShowCustomerModal] = useState(false)
   const [showItemModal, setShowItemModal] = useState(false)
+  const [customers, setCustomers] = useState<Customer[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
 
   // Order details
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [customerName, setCustomerName] = useState('')
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [notes, setNotes] = useState('')
 
-  // New customer form
-  const [newCustomer, setNewCustomer] = useState({
-    name: '',
-    phone: '',
-    email: '',
-  })
 
   // New item form
   const [newItem, setNewItem] = useState({
@@ -106,28 +111,9 @@ export default function AddOrderScreen() {
     setNotes(text)
   }, [])
 
-  const updateNewCustomerName = useCallback((text: string) => {
-    setNewCustomer(prev => ({ ...prev, name: text }))
-  }, [])
-
-  const updateNewCustomerPhone = useCallback((text: string) => {
-    setNewCustomer(prev => ({ ...prev, phone: text }))
-  }, [])
-
-  const updateNewCustomerEmail = useCallback((text: string) => {
-    setNewCustomer(prev => ({ ...prev, email: text }))
-  }, [])
-
-  const updateNewItemName = useCallback((text: string) => {
-    setNewItem(prev => ({ ...prev, name: text }))
-  }, [])
-
-  const updateNewItemPrice = useCallback((text: string) => {
-    setNewItem(prev => ({ ...prev, price: text }))
-  }, [])
-
-  const updateNewItemQuantity = useCallback((text: string) => {
-    setNewItem(prev => ({ ...prev, quantity: text }))
+  const updateCustomerName = useCallback((text: string) => {
+    setCustomerName(text)
+    setShowSuggestions(text.length > 0)
   }, [])
 
   useEffect(() => {
@@ -152,39 +138,31 @@ export default function AddOrderScreen() {
     }
   }
 
-  const addCustomer = async () => {
-    if (!newCustomer.name.trim()) {
-      Alert.alert('Error', 'Customer name is required')
-      return
-    }
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('No user found')
-
-      const { data, error } = await supabase
-        .from('customers')
-        .insert({
-          user_id: user.id,
-          name: newCustomer.name,
-          phone: newCustomer.phone || null,
-          email: newCustomer.email || null,
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      setNewCustomer({ name: '', phone: '', email: '' })
-      setShowCustomerModal(false)
-      loadCustomers()
-      setSelectedCustomer(data)
-      Alert.alert('Success', 'Customer added successfully!')
-    } catch (error) {
-      Alert.alert('Error', 'Failed to add customer')
-      console.error(error)
-    }
+  const getFilteredCustomers = () => {
+    if (!customerName) return []
+    return customers.filter(customer => 
+      customer.name.toLowerCase().includes(customerName.toLowerCase())
+    ).slice(0, 5) // Show max 5 suggestions
   }
+
+  const selectCustomer = (customer: Customer) => {
+    setCustomerName(customer.name)
+    setShowSuggestions(false)
+  }
+
+  const updateNewItemName = useCallback((text: string) => {
+    setNewItem(prev => ({ ...prev, name: text }))
+  }, [])
+
+  const updateNewItemPrice = useCallback((text: string) => {
+    setNewItem(prev => ({ ...prev, price: text }))
+  }, [])
+
+  const updateNewItemQuantity = useCallback((text: string) => {
+    setNewItem(prev => ({ ...prev, quantity: text }))
+  }, [])
+
+
 
   const addItem = () => {
     if (!newItem.name.trim() || !newItem.price.trim()) {
@@ -232,8 +210,8 @@ export default function AddOrderScreen() {
   }
 
   const createOrder = async () => {
-    if (!selectedCustomer) {
-      Alert.alert('Error', 'Please select a customer')
+    if (!customerName.trim()) {
+      Alert.alert('Error', 'Please enter a customer name')
       return
     }
 
@@ -253,7 +231,7 @@ export default function AddOrderScreen() {
         .from('orders')
         .insert({
           user_id: user.id,
-          customer_id: selectedCustomer.id,
+          customer_name: customerName,
           amount: total,
           status: 'pending',
           payment_method: paymentMethod,
@@ -280,7 +258,7 @@ export default function AddOrderScreen() {
 
       Alert.alert(
         'Order Created',
-        `Order for ${selectedCustomer.name} created successfully!\n\nTotal: RM ${total.toFixed(2)}`,
+        `Order for ${customerName} created successfully!\n\nTotal: RM ${total.toFixed(2)}`,
         [
           { text: 'OK', onPress: () => navigation.goBack() }
         ]
@@ -301,7 +279,7 @@ export default function AddOrderScreen() {
   ]
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <LinearGradient
         colors={[colors.primary, colors.secondary]}
         style={styles.header}
@@ -322,56 +300,47 @@ export default function AddOrderScreen() {
         </View>
       </LinearGradient>
 
-      <ScrollableContainer>
+      <ScrollableContainer scrollViewRef={scrollViewRef}>
         <View style={styles.content}>
-          {/* Customer Selection */}
+          {/* Customer Name Input */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Customer</Text>
-            
-            {selectedCustomer ? (
-              <View style={styles.selectedCustomer}>
-                <View style={styles.customerInfo}>
-                  <Text style={styles.customerName}>{selectedCustomer.name}</Text>
-                  {selectedCustomer.phone && (
-                    <Text style={styles.customerPhone}>📱 {selectedCustomer.phone}</Text>
-                  )}
-                  {selectedCustomer.email && (
-                    <Text style={styles.customerEmail}>✉️ {selectedCustomer.email}</Text>
-                  )}
-                </View>
-                <TouchableOpacity 
-                  style={styles.changeButton}
-                  onPress={() => setSelectedCustomer(null)}
-                >
-                  <Text style={styles.changeButtonText}>Change</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.customerSelector}>
-                <ScrollView horizontal style={styles.customersScroll} showsHorizontalScrollIndicator={false}>
-                  {customers.map(customer => (
+            <Text style={styles.sectionTitle}>Customer Name</Text>
+            <View style={styles.customerInputContainer}>
+              <TextInput
+                style={styles.customerInput}
+                value={customerName}
+                onChangeText={updateCustomerName}
+                placeholder="Enter customer name"
+                placeholderTextColor={colors.textSecondary}
+                returnKeyType="next"
+                autoCapitalize="words"
+                autoCorrect={false}
+                selectTextOnFocus={true}
+                onFocus={() => setShowSuggestions(customerName.length > 0)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              />
+              
+              {/* Customer Suggestions Dropdown */}
+              {showSuggestions && getFilteredCustomers().length > 0 && (
+                <View style={styles.suggestionsDropdown}>
+                  {getFilteredCustomers().map((customer) => (
                     <TouchableOpacity
                       key={customer.id}
-                      style={styles.customerOption}
-                      onPress={() => setSelectedCustomer(customer)}
+                      style={styles.suggestionItem}
+                      onPress={() => selectCustomer(customer)}
                     >
-                      <Text style={styles.customerOptionName}>{customer.name}</Text>
+                      <Text style={styles.suggestionName}>{customer.name}</Text>
                       {customer.phone && (
-                        <Text style={styles.customerOptionPhone}>{customer.phone}</Text>
+                        <Text style={styles.suggestionPhone}>{customer.phone}</Text>
                       )}
                     </TouchableOpacity>
                   ))}
-                  
-                  <TouchableOpacity 
-                    style={styles.addCustomerButton}
-                    onPress={() => setShowCustomerModal(true)}
-                  >
-                    <Text style={styles.addCustomerIcon}>+</Text>
-                    <Text style={styles.addCustomerText}>Add Customer</Text>
-                  </TouchableOpacity>
-                </ScrollView>
-              </View>
-            )}
+                </View>
+              )}
+            </View>
+            <Text style={styles.customerNote}>
+              Manage customers in the CRM section
+            </Text>
           </View>
 
           {/* Order Items */}
@@ -460,6 +429,7 @@ export default function AddOrderScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Notes (Optional)</Text>
             <TextInput
+              ref={notesInputRef}
               style={styles.notesInput}
               placeholder="Add any special instructions or notes..."
               placeholderTextColor={colors.textSecondary}
@@ -469,6 +439,15 @@ export default function AddOrderScreen() {
               numberOfLines={3}
               textAlignVertical="top"
               blurOnSubmit={false}
+              autoCorrect={true}
+              autoCapitalize="sentences"
+              selectTextOnFocus={true}
+              returnKeyType="default"
+              onFocus={() => {
+                setTimeout(() => {
+                  scrollViewRef.current?.scrollToEnd({ animated: true })
+                }, 100)
+              }}
             />
           </View>
 
@@ -500,72 +479,23 @@ export default function AddOrderScreen() {
                 title="Create Order" 
                 onPress={createOrder}
                 loading={loading}
-                disabled={!selectedCustomer || orderItems.length === 0}
+                disabled={!customerName.trim() || orderItems.length === 0}
               />
             </View>
           </View>
         </View>
       </ScrollableContainer>
 
-      {/* Add Customer Modal */}
-      <Modal visible={showCustomerModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add New Customer</Text>
-
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Customer Name *"
-              placeholderTextColor={colors.textSecondary}
-              value={newCustomer.name}
-              onChangeText={updateNewCustomerName}
-              returnKeyType="next"
-              blurOnSubmit={false}
-            />
-
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Phone Number"
-              placeholderTextColor={colors.textSecondary}
-              value={newCustomer.phone}
-              onChangeText={updateNewCustomerPhone}
-              keyboardType="phone-pad"
-              returnKeyType="next"
-              blurOnSubmit={false}
-            />
-
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Email Address"
-              placeholderTextColor={colors.textSecondary}
-              value={newCustomer.email}
-              onChangeText={updateNewCustomerEmail}
-              keyboardType="email-address"
-              returnKeyType="done"
-              autoCapitalize="none"
-              blurOnSubmit={false}
-            />
-
-            <View style={styles.modalActions}>
-              <SecondaryButton
-                title="Cancel"
-                onPress={() => setShowCustomerModal(false)}
-                size="small"
-              />
-              <PrimaryButton
-                title="Add Customer"
-                onPress={addCustomer}
-                size="small"
-              />
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       {/* Add Item Modal */}
-      <Modal visible={showItemModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+      <Modal visible={showItemModal} transparent animationType="fade">
+        <TouchableWithoutFeedback onPress={() => {
+          Keyboard.dismiss()
+          setShowItemModal(false)
+        }}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Add Item</Text>
 
             <TextInput
@@ -576,9 +506,14 @@ export default function AddOrderScreen() {
               onChangeText={updateNewItemName}
               returnKeyType="next"
               blurOnSubmit={false}
+              autoCapitalize="words"
+              autoCorrect={false}
+              selectTextOnFocus={true}
+              onSubmitEditing={() => priceInputRef.current?.focus()}
             />
 
             <TextInput
+              ref={priceInputRef}
               style={styles.modalInput}
               placeholder="Price (RM) *"
               placeholderTextColor={colors.textSecondary}
@@ -587,9 +522,12 @@ export default function AddOrderScreen() {
               keyboardType="decimal-pad"
               returnKeyType="next"
               blurOnSubmit={false}
+              selectTextOnFocus={true}
+              onSubmitEditing={() => quantityInputRef.current?.focus()}
             />
 
             <TextInput
+              ref={quantityInputRef}
               style={styles.modalInput}
               placeholder="Quantity"
               placeholderTextColor={colors.textSecondary}
@@ -597,7 +535,9 @@ export default function AddOrderScreen() {
               onChangeText={updateNewItemQuantity}
               keyboardType="number-pad"
               returnKeyType="done"
-              blurOnSubmit={false}
+              blurOnSubmit={true}
+              selectTextOnFocus={true}
+              onSubmitEditing={Keyboard.dismiss}
             />
 
             <View style={styles.modalActions}>
@@ -612,8 +552,10 @@ export default function AddOrderScreen() {
                 size="small"
               />
             </View>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </SafeAreaView>
   )
@@ -777,6 +719,66 @@ const createStyles = (colors: any) => StyleSheet.create({
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
     color: colors.primary,
+  },
+  customerInputContainer: {
+    position: 'relative',
+    zIndex: 1000,
+  },
+  customerInput: {
+    backgroundColor: colors.surface,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    fontSize: Typography.fontSizes.body,
+    fontFamily: Typography.fontFamily.regular,
+    color: colors.textPrimary,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: Spacing.sm,
+  },
+  customerNote: {
+    fontSize: Typography.fontSizes.caption,
+    fontFamily: Typography.fontFamily.regular,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+  },
+  suggestionsDropdown: {
+    position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.surface,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    maxHeight: 200,
+    zIndex: 1001,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  suggestionItem: {
+    padding: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  suggestionName: {
+    fontSize: Typography.fontSizes.body,
+    fontFamily: Typography.fontFamily.medium,
+    color: colors.textPrimary,
+    marginBottom: Spacing.xs,
+  },
+  suggestionPhone: {
+    fontSize: Typography.fontSizes.caption,
+    fontFamily: Typography.fontFamily.regular,
+    color: colors.textSecondary,
   },
   addItemButton: {
     backgroundColor: colors.accent,

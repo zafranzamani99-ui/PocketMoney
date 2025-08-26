@@ -210,7 +210,7 @@ export default function TransactionsScreen() {
   const styles = createStyles(colors)
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <View style={[styles.mainContainer, isTablet && styles.tabletContainer]}>
         <View style={styles.header}>
         <Text style={styles.title}>Transactions</Text>
@@ -352,7 +352,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg, // Standardized padding for SafeAreaView
     paddingBottom: Spacing.md,
-    marginTop: Spacing.lg, // Push title down for proper spacing
+    marginTop: Spacing.xxl, // Push title down for proper spacing
   },
   title: {
     fontSize: Typography.fontSizes.display,

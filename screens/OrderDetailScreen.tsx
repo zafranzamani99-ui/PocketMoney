@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   Alert,
@@ -11,7 +10,10 @@ import {
   Modal,
   TextInput,
   Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
 import { useTheme } from '../contexts/ThemeContext.js'
@@ -54,6 +56,10 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailProp
   const [showItemModal, setShowItemModal] = useState(false)
   const [editingItem, setEditingItem] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+
+  // Refs for input navigation
+  const priceInputRef = useRef<TextInput>(null)
+  const quantityInputRef = useRef<TextInput>(null)
 
   // Edit form states
   const [editOrder, setEditOrder] = useState({
@@ -371,13 +377,14 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailProp
         </div>
       )
     } else {
-      const { ScrollView } = require('react-native')
       return (
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingBottom: 50 }}
           showsVerticalScrollIndicator={true}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          scrollEnabled={!showItemModal}
         >
           {children}
         </ScrollView>
@@ -491,6 +498,22 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailProp
                 </Text>
               </TouchableOpacity>
             ))}
+          </View>
+        )}
+
+        {/* Add Item Section for orders with no items */}
+        {(!order.order_items || order.order_items.length === 0) && (
+          <View style={styles.itemsCard}>
+            <Text style={styles.sectionTitle}>Items</Text>
+            <View style={styles.emptyItemsContainer}>
+              <Text style={styles.emptyItemsText}>No items added yet</Text>
+              <TouchableOpacity 
+                style={styles.addItemButton}
+                onPress={() => setShowItemModal(true)}
+              >
+                <Text style={styles.addItemText}>+ Add First Item</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -636,9 +659,16 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailProp
       </Modal>
 
       {/* Add/Edit Item Modal */}
-      <Modal visible={showItemModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+      <View style={[styles.modalOverlay, { display: showItemModal ? 'flex' : 'none' }]}>
+        <TouchableWithoutFeedback onPress={() => {
+          Keyboard.dismiss()
+          setShowItemModal(false)
+          setEditingItem(null)
+          setNewItem({name: '', price: '', quantity: '1'})
+        }}>
+          <View style={styles.modalOverlayBackground} />
+        </TouchableWithoutFeedback>
+        <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>
               {editingItem ? 'Edit Item' : 'Add Item'}
             </Text>
@@ -649,24 +679,40 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailProp
               placeholderTextColor={colors.textSecondary}
               value={newItem.name}
               onChangeText={(text) => setNewItem({...newItem, name: text})}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              autoCapitalize="words"
+              autoCorrect={false}
+              selectTextOnFocus={true}
+              onSubmitEditing={() => priceInputRef.current?.focus()}
             />
 
             <TextInput
+              ref={priceInputRef}
               style={styles.modalInput}
               placeholder="Price (RM) *"
               placeholderTextColor={colors.textSecondary}
               value={newItem.price}
               onChangeText={(text) => setNewItem({...newItem, price: text})}
-              keyboardType="numeric"
+              keyboardType="decimal-pad"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              selectTextOnFocus={true}
+              onSubmitEditing={() => quantityInputRef.current?.focus()}
             />
 
             <TextInput
+              ref={quantityInputRef}
               style={styles.modalInput}
               placeholder="Quantity"
               placeholderTextColor={colors.textSecondary}
               value={newItem.quantity}
               onChangeText={(text) => setNewItem({...newItem, quantity: text})}
-              keyboardType="numeric"
+              keyboardType="number-pad"
+              returnKeyType="done"
+              blurOnSubmit={true}
+              selectTextOnFocus={true}
+              onSubmitEditing={Keyboard.dismiss}
             />
 
             <View style={styles.modalActions}>
@@ -702,7 +748,6 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailProp
             </View>
           </View>
         </View>
-      </Modal>
     </SafeAreaView>
   )
 }
@@ -838,6 +883,16 @@ const createStyles = (colors: any) => StyleSheet.create({
     fontFamily: Typography.fontFamily.medium,
     color: colors.textPrimary,
   },
+  emptyItemsContainer: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xl,
+  },
+  emptyItemsText: {
+    fontSize: Typography.fontSizes.body,
+    fontFamily: Typography.fontFamily.regular,
+    color: colors.textSecondary,
+    marginBottom: Spacing.lg,
+  },
   itemRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -964,16 +1019,31 @@ const createStyles = (colors: any) => StyleSheet.create({
     fontFamily: Typography.fontFamily.semiBold,
   },
   modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
     justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: Spacing.lg,
+  },
+  modalOverlayBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   modalContent: {
     backgroundColor: colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     maxHeight: '80%',
+    width: '100%',
+    zIndex: 1001,
   },
   modalTitle: {
     fontSize: Typography.fontSizes.subheading,

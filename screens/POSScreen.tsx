@@ -212,7 +212,7 @@ export default function POSScreen() {
   const styles = createStyles(colors)
 
   return (
-    <SafeAreaView style={styles.container} edges={isTablet ? ['top'] : ['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={[styles.wrapper, isTablet && styles.tabletWrapper]}>
         {/* LIGHTNING FAST POS HEADER */}
         <View style={styles.header}>
@@ -364,10 +364,10 @@ const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    width: '100%',
   },
   wrapper: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   tabletWrapper: {
     maxWidth: '98%',

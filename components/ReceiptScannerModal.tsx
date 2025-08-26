@@ -10,6 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { CameraView, CameraType, FlashMode, useCameraPermissions } from 'expo-camera'
 import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
@@ -187,7 +188,7 @@ export default function ReceiptScannerModal({ visible, onClose, onSuccess }: Rec
   if (!permission.granted) {
     return (
       <Modal visible={visible} animationType="slide">
-        <View style={styles.permissionContainer}>
+        <SafeAreaView style={styles.permissionContainer} edges={['top', 'bottom']}>
           <Text style={styles.permissionText}>Camera permission is required to scan receipts</Text>
           <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
             <Text style={styles.permissionButtonText}>Grant Permission</Text>
@@ -195,22 +196,16 @@ export default function ReceiptScannerModal({ visible, onClose, onSuccess }: Rec
           <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>
-        </View>
+        </SafeAreaView>
       </Modal>
     )
   }
 
   return (
     <Modal visible={visible} animationType="slide">
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleClose}>
-            <Text style={styles.headerButton}>✕</Text>
-          </TouchableOpacity>
           <Text style={styles.title}>Scan Receipt</Text>
-          <TouchableOpacity onPress={pickImage}>
-            <Text style={styles.headerButton}>📁</Text>
-          </TouchableOpacity>
         </View>
 
         {capturedImage ? (
@@ -251,13 +246,15 @@ export default function ReceiptScannerModal({ visible, onClose, onSuccess }: Rec
               facing={facing}
               flash={flash}
             >
-              <View style={styles.cameraOverlay}>
-                <View style={styles.scanGuide}>
-                  <Text style={styles.guideText}>Position receipt within the frame</Text>
-                  <View style={styles.scanFrame} />
-                </View>
-              </View>
+              <TouchableOpacity onPress={handleClose} style={styles.closeButtonOverlay}>
+                <Text style={styles.headerButton}>✕</Text>
+              </TouchableOpacity>
+              <View style={styles.scanFrame} />
             </CameraView>
+
+            <TouchableOpacity onPress={pickImage} style={styles.galleryOption}>
+              <Text style={styles.galleryText}>Upload receipt from Gallery</Text>
+            </TouchableOpacity>
 
             <View style={styles.cameraControls}>
               <TouchableOpacity
@@ -282,7 +279,7 @@ export default function ReceiptScannerModal({ visible, onClose, onSuccess }: Rec
             </View>
           </View>
         )}
-      </View>
+      </SafeAreaView>
     </Modal>
   )
 }
@@ -290,25 +287,48 @@ export default function ReceiptScannerModal({ visible, onClose, onSuccess }: Rec
 const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: 'black',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    backgroundColor: 'black',
+  },
+  closeButtonOverlay: {
+    position: 'absolute',
+    top: 5,
+    left: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  galleryOption: {
+    backgroundColor: colors.primary,
+    marginHorizontal: Spacing.lg,
+    marginVertical: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginTop: Spacing.xs,
+    alignItems: 'center',
+  },
+  galleryText: {
+    fontSize: Typography.fontSizes.body,
+    fontFamily: Typography.fontFamily.medium,
+    color: colors.textPrimary,
   },
   title: {
     fontSize: Typography.fontSizes.subheading,
     fontWeight: Typography.fontWeights.bold,
-    color: colors.textPrimary,
+    color: 'white',
   },
   headerButton: {
     fontSize: Typography.fontSizes.subheading,
-    color: colors.primary,
+    color: 'white',
   },
   permissionContainer: {
     flex: 1,
@@ -344,44 +364,33 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   cameraContainer: {
     flex: 1,
+    backgroundColor: 'black',
   },
   camera: {
     flex: 1,
-  },
-  cameraOverlay: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scanGuide: {
-    alignItems: 'center',
-  },
-  guideText: {
-    fontSize: Typography.fontSizes.body,
-    color: colors.textPrimary,
-    textAlign: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.sm,
-    marginBottom: Spacing.xl,
+    backgroundColor: 'black',
   },
   scanFrame: {
-    width: 250,
-    height: 300,
-    borderWidth: 2,
+    position: 'absolute',
+    top: '10%',
+    left: '8%',
+    right: '8%',
+    height: '80%',
+    borderWidth: 3,
     borderColor: colors.primary,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.lg,
     backgroundColor: 'transparent',
+    borderStyle: 'dashed',
   },
   cameraControls: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
-    backgroundColor: colors.background,
+    paddingVertical: Spacing.md,
+    backgroundColor: 'black',
+    height: 100,
+    marginBottom: 20,
   },
   controlButton: {
     width: 50,

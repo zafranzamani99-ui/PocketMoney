@@ -277,7 +277,7 @@ export default function ProfileScreen() {
   const styles = createStyles(colors)
 
   return (
-    <SafeAreaView style={styles.container} edges={isTablet ? ['top'] : ['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={[styles.mainContainer, isTablet && styles.tabletContainer]}>
         <View style={styles.header}>
           <Text style={styles.title}>Profile</Text>
@@ -389,7 +389,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     paddingVertical: Spacing.md,
   },
   title: {
-    fontSize: Typography.fontSizes.heading,
+    fontSize: Typography.fontSizes.display,
     fontFamily: Typography.fontFamily.bold,
     color: colors.textPrimary,
   },

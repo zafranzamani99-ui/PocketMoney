@@ -550,7 +550,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   header: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg, // Reduced padding - SafeAreaView handles notch/Dynamic Island
+    paddingTop: Spacing.xxl, // Reduced padding - SafeAreaView handles notch/Dynamic Island
     paddingBottom: Spacing.md,
     borderBottomLeftRadius: BorderRadius.xl,
     borderBottomRightRadius: BorderRadius.xl,

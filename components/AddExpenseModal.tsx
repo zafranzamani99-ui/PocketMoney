@@ -254,14 +254,14 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
   const styles = createStyles(colors)
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} animationType="slide" transparent statusBarTranslucent={true} presentationStyle="fullScreen">
       <View style={styles.overlay}>
         {/* Backdrop to close when tapping outside */}
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
 
         {/* Bottom Sheet */}
         <Animated.View style={[styles.sheet, expanded ? styles.sheetFull : styles.sheetRounded, { height: sheetHeight }]}>
-          <SafeAreaView style={styles.sheetInner} edges={['bottom']}>
+          <View style={styles.sheetInner}>
           {/* Handle (draggable area) */}
           <View style={styles.handleRow} {...panResponder.panHandlers}>
             <View style={styles.handleBg}>
@@ -405,7 +405,7 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
               </View>
             </View>
           </ScrollView>
-          </SafeAreaView>
+          </View>
         </Animated.View>
       </View>
     </Modal>
@@ -414,18 +414,25 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
 
 const createStyles = (colors: any) => StyleSheet.create({
   overlay: {
-    flex: 1,
+    position: 'absolute',
+    top: -100,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.35)',
     justifyContent: 'flex-end',
+    paddingTop: 100,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject as any,
   },
   sheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: colors.background,
     overflow: 'hidden',
-    width: '100%',
-    alignSelf: 'stretch',
   },
   sheetRounded: {
     borderTopLeftRadius: 24,
@@ -463,7 +470,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.md,
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
@@ -474,14 +481,14 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   backButton: {
     width: 40,
-    height: 40,
+    height: 50,
     borderRadius: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backIcon: {
-    fontSize: 24,
+    fontSize: 35,
     color: colors.textPrimary,
     fontFamily: Typography.fontFamily.medium,
   },

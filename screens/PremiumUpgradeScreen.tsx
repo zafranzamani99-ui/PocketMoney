@@ -411,8 +411,8 @@ const createStyles = (colors: any) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.md,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.xs,
   },
   backButton: {
     width: 40,
