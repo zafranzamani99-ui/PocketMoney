@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
-import { useTheme } from '../contexts/ThemeContext.js'
+import { useTheme } from '../contexts/ThemeContext'
 import { supabase } from '../lib/supabase'
 
 interface ParsedOrder {
@@ -220,7 +220,9 @@ export default function WhatsAppOrderParser({ visible, onClose, onOrderParsed }:
   const updateItem = (index: number, field: string, value: any) => {
     if (!parsedData) return
     const newItems = [...parsedData.items]
-    newItems[index] = { ...newItems[index], [field]: value }
+    if (newItems[index]) {
+      newItems[index] = { ...newItems[index], [field]: value }
+    }
     setParsedData({ ...parsedData, items: newItems })
   }
 

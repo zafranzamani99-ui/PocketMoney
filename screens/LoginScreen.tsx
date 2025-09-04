@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 const { width: screenWidth } = Dimensions.get('window')
 const isTablet = screenWidth >= 768
 import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
-import { useTheme } from '../contexts/ThemeContext.js'
+import { useTheme } from '../contexts/ThemeContext'
 import { supabase } from '../lib/supabase'
 
 interface LoginScreenProps {

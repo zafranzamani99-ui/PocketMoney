@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { Spacing } from '../../constants/themeHooks'
-import { useTheme } from '../../contexts/ThemeContext.js'
+import { useTheme } from '../../contexts/ThemeContext'
 
 interface ButtonContainerProps {
   children: React.ReactNode

@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
-import { useTheme } from '../contexts/ThemeContext.js'
+import { useTheme } from '../contexts/ThemeContext'
 
 // Create a scrollable container that works on all platforms
 const ScrollableContainer = ({ children }: { children: React.ReactNode }) => {

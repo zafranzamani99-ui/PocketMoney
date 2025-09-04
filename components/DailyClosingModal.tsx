@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
-import { useTheme } from '../contexts/ThemeContext.js'
+import { useTheme } from '../contexts/ThemeContext'
 import { supabase } from '../lib/supabase'
 
 interface DailyStats {
@@ -76,7 +76,7 @@ export default function DailyClosingModal({ visible, onClose, onClosingComplete 
       const topCategory = categories.length > 0 
         ? categories.reduce((a, b, i, arr) => 
             arr.filter(v => v === a).length >= arr.filter(v => v === b).length ? a : b
-          )
+          ) || 'N/A'
         : 'No transactions'
 
       // Get cash wallet balance
@@ -94,7 +94,7 @@ export default function DailyClosingModal({ visible, onClose, onClosingComplete 
         orderCount: orders?.length || 0,
         topCategory,
         cashBalance: cashWallet?.balance || 0,
-        date: today,
+        date: today || new Date().toISOString().split('T')[0],
       }
 
       setDailyStats(stats)
@@ -165,7 +165,7 @@ export default function DailyClosingModal({ visible, onClose, onClosingComplete 
   }
 
   const checkAchievements = (currentStreak: number) => {
-    const achievements = []
+    const achievements: string[] = []
     
     if (currentStreak === 1) achievements.push('🎯 First Closing!')
     if (currentStreak === 7) achievements.push('🔥 One Week Streak!')

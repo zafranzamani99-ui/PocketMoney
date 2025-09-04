@@ -16,12 +16,23 @@ try {
   console.warn('Voice module not available in this environment:', error)
 }
 
-interface VoiceResult {
+export interface VoiceResult {
   command: 'expense' | 'income' | 'unknown'
   amount?: number
   description?: string
   category?: string
   customer?: string
+}
+
+interface SpeechResultsEvent {
+  value?: string[]
+}
+
+interface SpeechErrorEvent {
+  error?: {
+    code?: string
+    message?: string
+  }
 }
 
 class VoiceService {
@@ -106,15 +117,18 @@ class VoiceService {
     const results = event.value
     if (results && results.length > 0) {
       const spokenText = results[0]
-      console.log('Voice recognition result:', spokenText)
-      this.processVoiceCommand(spokenText)
+      if (spokenText) {
+        console.log('Voice recognition result:', spokenText)
+        this.processVoiceCommand(spokenText)
+      }
     }
   }
 
   private onSpeechError = (event: SpeechErrorEvent) => {
     console.error('Voice recognition error:', event.error)
     this.isListening = false
-    Alert.alert('Voice Error', 'Failed to recognize speech. Please try again.')
+    const errorMessage = event.error?.message || 'Failed to recognize speech. Please try again.'
+    Alert.alert('Voice Error', errorMessage)
   }
 
   private processVoiceCommand(spokenText: string): VoiceResult {
@@ -150,8 +164,8 @@ class VoiceService {
     for (const pattern of [...englishPatterns.expense, ...malayPatterns.expense]) {
       const match = text.match(pattern)
       if (match) {
-        const amount = parseFloat(match[1])
-        const description = match[2].trim()
+        const amount = parseFloat(match[1] || '0')
+        const description = match[2]?.trim() || ''
         const category = this.categorizeExpense(description)
         
         return {
@@ -167,8 +181,8 @@ class VoiceService {
     for (const pattern of [...englishPatterns.income, ...malayPatterns.income]) {
       const match = text.match(pattern)
       if (match) {
-        const amount = parseFloat(match[1])
-        const description = match[2].trim()
+        const amount = parseFloat(match[1] || '0')
+        const description = match[2]?.trim() || ''
         const customer = this.extractCustomerName(description)
         
         return {
@@ -183,7 +197,7 @@ class VoiceService {
     // Simple amount extraction as fallback
     const amountMatch = text.match(/(?:rm\s*)?(\d+(?:\.\d{2})?)\s*(?:ringgit|dollars?)?/i)
     if (amountMatch) {
-      const amount = parseFloat(amountMatch[1])
+      const amount = parseFloat(amountMatch[1] || '0')
       
       // Determine if it's expense or income based on keywords
       if (this.containsExpenseKeywords(text)) {
@@ -237,7 +251,7 @@ class VoiceService {
     for (const pattern of namePatterns) {
       const match = description.match(pattern)
       if (match) {
-        return match[1].trim()
+        return match[1]?.trim()
       }
     }
 

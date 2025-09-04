@@ -28,7 +28,10 @@
       "Read(/c:\\Users\\N6748\\OneDrive - medexoneglobal.com\\Pictures\\New folder/**)",
       "Read(/c:\\Users\\N6748\\OneDrive - medexoneglobal.com\\Pictures\\New folder/**)",
       "Read(/c:\\Users\\zafra\\OneDrive\\Pictures\\Screenshots/**)",
-      "Read(/c:\\Users\\zafra\\OneDrive\\Pictures\\Screenshots/**)"
+      "Read(/c:\\Users\\zafra\\OneDrive\\Pictures\\Screenshots/**)",
+      "Bash(npm run start:*)",
+      "Bash(nslookup:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": [],

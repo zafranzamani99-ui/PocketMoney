@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
 import { supabase } from '../lib/supabase'
 import { RootStackParamList } from '../navigation/AppNavigator'
-import { useTheme } from '../contexts/ThemeContext.js'
+import { useTheme } from '../contexts/ThemeContext'
 
 type NavigationProp = StackNavigationProp<RootStackParamList>
 type ThemeMode = 'light' | 'dark' | 'system'

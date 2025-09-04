@@ -22,6 +22,9 @@ import { useTheme } from '../contexts/ThemeContext'
 import { supabase } from '../lib/supabase'
 import { RootStackParamList } from '../navigation/AppNavigator'
 import CalendarFilter from '../components/CalendarFilter'
+import StandardizedHeader from '../components/StandardizedHeader'
+import PaymentConfirmationModal from '../components/PaymentConfirmationModal'
+import OrderCompletionModal from '../components/OrderCompletionModal'
 
 type NavigationProp = StackNavigationProp<RootStackParamList>
 
@@ -56,7 +59,6 @@ const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    width: '100%',
   },
   mainContainer: {
     flex: 1,
@@ -66,24 +68,11 @@ const createStyles = (colors: any) => StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
   },
-  header: {
+  
+  // Header Controls
+  headerControls: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl, // Reduced padding - SafeAreaView handles notch/Dynamic Island
-    paddingBottom: Spacing.md,
-    borderBottomLeftRadius: BorderRadius.xl,
-    borderBottomRightRadius: BorderRadius.xl,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: Spacing.md,
-    marginTop: Spacing.lg, // Push title down
-  },
-  title: {
-    fontSize: Typography.fontSizes.display,
-    fontFamily: Typography.fontFamily.bold,
-    color: colors.textPrimary,
   },
   dateButton: {
     flexDirection: 'row',
@@ -91,17 +80,22 @@ const createStyles = (colors: any) => StyleSheet.create({
     backgroundColor: colors.surface,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   dateButtonActive: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
+    backgroundColor: colors.primary + '10',
+    borderColor: colors.primary,
   },
   dateButtonIcon: {
-    fontSize: 16,
-    marginRight: Spacing.sm,
+    fontSize: 14,
+    marginRight: Spacing.xs,
   },
   dateButtonText: {
     fontSize: Typography.fontSizes.bodySmall,
@@ -109,59 +103,87 @@ const createStyles = (colors: any) => StyleSheet.create({
     color: colors.textSecondary,
   },
   dateButtonTextActive: {
-    color: colors.textPrimary,
+    color: colors.primary,
+    fontFamily: Typography.fontFamily.semiBold,
   },
-  headerStats: {
+
+  // Quick Stats
+  statsRow: {
     flexDirection: 'row',
-    gap: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
   },
-  statItem: {
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   statValue: {
-    fontSize: Typography.fontSizes.heading,
+    fontSize: Typography.fontSizes.subheading,
     fontFamily: Typography.fontFamily.bold,
     color: colors.textPrimary,
-    marginBottom: Spacing.xs,
+    marginBottom: 2,
   },
   statLabel: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.medium,
-    color: colors.textPrimary,
-    opacity: 0.8,
+    color: colors.textSecondary,
   },
+
+  // Search & Filters
   searchContainer: {
     paddingHorizontal: Spacing.lg,
-    marginTop: Spacing.md,
     marginBottom: Spacing.sm,
   },
   searchInput: {
     backgroundColor: colors.surface,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
     color: colors.textPrimary,
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
+  
   filterContainer: {
     flexDirection: 'row',
     paddingHorizontal: Spacing.lg,
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
+    gap: Spacing.xs,
+    marginBottom: Spacing.lg,
   },
   filterButton: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.md,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
   },
   filterButtonActive: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
   },
   filterButtonText: {
     fontSize: Typography.fontSizes.bodySmall,
@@ -170,152 +192,225 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   filterButtonTextActive: {
     color: colors.textPrimary,
+    fontFamily: Typography.fontFamily.semiBold,
   },
+
+  // Orders List
   ordersList: {
     flex: 1,
   },
   ordersListContent: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xl,
+    paddingBottom: 100,
   },
+  
+  // Beautiful Order Cards
   orderCard: {
     backgroundColor: colors.surface,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    marginBottom: Spacing.sm,
+    borderRadius: BorderRadius.xl,
+    marginBottom: Spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
     borderWidth: 1,
     borderColor: colors.border,
+    overflow: 'hidden',
   },
-  orderHeader: {
+  
+  orderCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: Spacing.sm,
+    padding: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
-  orderInfo: {
+  
+  orderMainInfo: {
     flex: 1,
   },
   customerName: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.semiBold,
     color: colors.textPrimary,
-    marginBottom: Spacing.xs,
+    marginBottom: 4,
+  },
+  orderMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
   },
   orderDate: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.regular,
     color: colors.textSecondary,
   },
-  orderAmount: {
+  orderSeparator: {
+    fontSize: Typography.fontSizes.caption,
+    color: colors.textSecondary,
+    marginHorizontal: Spacing.xs,
+  },
+  
+  orderAmountSection: {
     alignItems: 'flex-end',
   },
   amountText: {
-    fontSize: Typography.fontSizes.subheading,
+    fontSize: Typography.fontSizes.heading,
     fontFamily: Typography.fontFamily.bold,
     color: colors.success,
+    marginBottom: 2,
   },
-  orderDetails: {
-    marginBottom: Spacing.sm,
-  },
-  statusContainer: {
+  
+  // Status Badge
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.md,
+    alignSelf: 'flex-start',
+  },
+  statusBadgePending: {
+    backgroundColor: colors.warning + '20',
+  },
+  statusBadgePaid: {
+    backgroundColor: colors.primary + '20',
+  },
+  statusBadgeCompleted: {
+    backgroundColor: colors.success + '20',
   },
   statusEmoji: {
-    fontSize: 16,
-    marginRight: Spacing.sm,
+    fontSize: 12,
+    marginRight: 4,
   },
   statusText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.semiBold,
-    color: colors.textPrimary,
   },
-  paymentMethod: {
+  statusTextPending: {
+    color: colors.warning,
+  },
+  statusTextPaid: {
+    color: colors.primary,
+  },
+  statusTextCompleted: {
+    color: colors.success,
+  },
+
+  // Order Details Section  
+  orderDetailsSection: {
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.sm,
+  },
+  
+  paymentMethodContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
+  },
+  paymentMethodIcon: {
+    fontSize: 14,
+    marginRight: Spacing.xs,
+    width: 16,
+  },
+  paymentMethodText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.regular,
     color: colors.textSecondary,
-    marginBottom: Spacing.xs,
   },
-  phoneButton: {
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    alignSelf: 'flex-start',
+
+  phoneContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  phoneIcon: {
+    fontSize: 14,
+    marginRight: Spacing.xs,
+    width: 16,
   },
   phoneText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.medium,
     color: colors.textPrimary,
   },
+
+  // Action Buttons
   orderActions: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.background,
   },
   actionButton: {
     flex: 1,
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.sm,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  paidButton: {
-    backgroundColor: colors.primary + '20',
-  },
-  completedButton: {
-    backgroundColor: colors.success + '20',
-  },
-  pendingButton: {
-    backgroundColor: colors.warning + '20',
+  actionButtonWithBorder: {
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
   },
   actionButtonText: {
     fontSize: Typography.fontSizes.bodySmall,
     fontFamily: Typography.fontFamily.semiBold,
-    color: colors.textPrimary,
+    color: colors.primary,
   },
+  actionButtonTextSecondary: {
+    color: colors.textSecondary,
+  },
+
+  // Empty State
   emptyContainer: {
     alignItems: 'center',
     paddingVertical: Spacing.xxl * 2,
+    paddingHorizontal: Spacing.lg,
   },
   emptyEmoji: {
-    fontSize: 64,
+    fontSize: 48,
     marginBottom: Spacing.lg,
-    color: colors.textPrimary,
+    opacity: 0.6,
   },
   emptyTitle: {
     fontSize: Typography.fontSizes.subheading,
-    fontFamily: Typography.fontFamily.bold,
+    fontFamily: Typography.fontFamily.semiBold,
     color: colors.textPrimary,
     marginBottom: Spacing.sm,
+    textAlign: 'center',
   },
   emptyText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: Typography.lineHeights.body,
-    paddingHorizontal: Spacing.lg,
+    lineHeight: 22,
+    maxWidth: 280,
   },
+
+  // Floating Action Button
   floatingButton: {
     position: 'absolute',
     right: Spacing.lg,
-    bottom: Spacing.lg,
+    bottom: Spacing.xl,
     width: 56,
     height: 56,
     borderRadius: 28,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8,
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
+    elevation: 8,
   },
   floatingButtonText: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: Typography.fontFamily.bold,
     color: colors.textPrimary,
+    marginTop: -2,
   },
 })
 
@@ -328,6 +423,9 @@ export default function OrdersScreen() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedDate, setSelectedDate] = useState('')
   const [showCalendar, setShowCalendar] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [showCompletionModal, setShowCompletionModal] = useState(false)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
 
   useEffect(() => {
     loadOrders()
@@ -371,6 +469,30 @@ export default function OrdersScreen() {
       Alert.alert('Error', 'Failed to update order status')
       console.error(error)
     }
+  }
+
+  const handleMarkPaid = (order: Order) => {
+    setSelectedOrder(order)
+    setShowPaymentModal(true)
+  }
+
+  const handleCompleteOrder = (order: Order) => {
+    setSelectedOrder(order)
+    setShowCompletionModal(true)
+  }
+
+  const confirmPayment = () => {
+    if (selectedOrder) {
+      updateOrderStatus(selectedOrder.id, 'paid')
+    }
+    // Don't clear selectedOrder immediately - let modal handle it
+  }
+
+  const confirmCompletion = () => {
+    if (selectedOrder) {
+      updateOrderStatus(selectedOrder.id, 'completed')
+    }
+    // Don't clear selectedOrder immediately - let modal handle it
   }
 
   const filteredOrders = orders.filter(order => {
@@ -421,74 +543,137 @@ export default function OrdersScreen() {
     return date.toLocaleDateString()
   }
 
-  const renderOrder = ({ item }: { item: Order }) => (
-    <TouchableOpacity 
-      style={styles.orderCard}
-      onPress={() => navigation.navigate('OrderDetail', { order: item })}
-    >
-      <View style={styles.orderHeader}>
-        <View style={styles.orderInfo}>
-          <Text style={styles.customerName}>
-            {item.customers?.name || 'Customer'}
-          </Text>
-          <Text style={styles.orderDate}>{formatDate(item.created_at)}</Text>
+  const renderOrder = ({ item }: { item: Order }) => {
+    const getStatusBadgeStyle = () => {
+      switch (item.status) {
+        case 'pending': return styles.statusBadgePending
+        case 'paid': return styles.statusBadgePaid  
+        case 'completed': return styles.statusBadgeCompleted
+        default: return styles.statusBadgePending
+      }
+    }
+
+    const getStatusTextStyle = () => {
+      switch (item.status) {
+        case 'pending': return styles.statusTextPending
+        case 'paid': return styles.statusTextPaid
+        case 'completed': return styles.statusTextCompleted  
+        default: return styles.statusTextPending
+      }
+    }
+
+    const getPaymentIcon = () => {
+      if (!item.payment_method) return '💳'
+      const method = item.payment_method.toLowerCase()
+      if (method.includes('cash')) return '💵'
+      if (method.includes('card') || method.includes('credit')) return '💳'
+      if (method.includes('bank') || method.includes('transfer')) return '🏦'
+      if (method.includes('ewallet') || method.includes('grab') || method.includes('touch')) return '📱'
+      return '💳'
+    }
+
+    return (
+      <TouchableOpacity 
+        style={styles.orderCard}
+        onPress={() => navigation.navigate('OrderDetail', { order: item })}
+        activeOpacity={0.7}
+      >
+        {/* Header Section */}
+        <View style={styles.orderCardHeader}>
+          <View style={styles.orderMainInfo}>
+            <Text style={styles.customerName}>
+              {item.customers?.name || 'Walk-in Customer'}
+            </Text>
+            <View style={styles.orderMeta}>
+              <Text style={styles.orderDate}>{formatDate(item.created_at)}</Text>
+              <Text style={styles.orderSeparator}>•</Text>
+              <View style={[styles.statusBadge, getStatusBadgeStyle()]}>
+                <Text style={styles.statusEmoji}>{getStatusEmoji(item.status)}</Text>
+                <Text style={[styles.statusText, getStatusTextStyle()]}>
+                  {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                </Text>
+              </View>
+            </View>
+          </View>
+          
+          <View style={styles.orderAmountSection}>
+            <Text style={styles.amountText}>RM {item.amount.toFixed(2)}</Text>
+          </View>
         </View>
-        <View style={styles.orderAmount}>
-          <Text style={styles.amountText}>RM {item.amount.toFixed(2)}</Text>
+
+        {/* Details Section */}
+        <View style={styles.orderDetailsSection}>
+          {item.payment_method && (
+            <View style={styles.paymentMethodContainer}>
+              <Text style={styles.paymentMethodIcon}>{getPaymentIcon()}</Text>
+              <Text style={styles.paymentMethodText}>{item.payment_method}</Text>
+            </View>
+          )}
+
+          {item.customers?.phone && (
+            <View style={styles.phoneContainer}>
+              <Text style={styles.phoneIcon}>📞</Text>
+              <Text style={styles.phoneText}>{item.customers.phone}</Text>
+            </View>
+          )}
         </View>
-      </View>
 
-      <View style={styles.orderDetails}>
-        <View style={styles.statusContainer}>
-          <Text style={styles.statusEmoji}>{getStatusEmoji(item.status)}</Text>
-          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-            {item.status.toUpperCase()}
-          </Text>
+        {/* Action Buttons */}
+        <View style={styles.orderActions}>
+          {item.status === 'pending' && (
+            <>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.actionButtonWithBorder]}
+                onPress={() => handleMarkPaid(item)}
+              >
+                <Text style={styles.actionButtonText}>Mark Paid</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => navigation.navigate('OrderDetail', { order: item })}
+              >
+                <Text style={[styles.actionButtonText, styles.actionButtonTextSecondary]}>View Details</Text>
+              </TouchableOpacity>
+            </>
+          )}
+          
+          {item.status === 'paid' && (
+            <>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.actionButtonWithBorder]}
+                onPress={() => handleCompleteOrder(item)}
+              >
+                <Text style={styles.actionButtonText}>Complete Order</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => navigation.navigate('OrderDetail', { order: item })}
+              >
+                <Text style={[styles.actionButtonText, styles.actionButtonTextSecondary]}>View Details</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {item.status === 'completed' && (
+            <>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.actionButtonWithBorder]}
+                onPress={() => updateOrderStatus(item.id, 'pending')}
+              >
+                <Text style={[styles.actionButtonText, styles.actionButtonTextSecondary]}>Mark Pending</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => navigation.navigate('OrderDetail', { order: item })}
+              >
+                <Text style={[styles.actionButtonText, styles.actionButtonTextSecondary]}>View Details</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
-        
-        {item.payment_method && (
-          <Text style={styles.paymentMethod}>
-            {item.payment_method}
-          </Text>
-        )}
-
-        {item.customers?.phone && (
-          <TouchableOpacity style={styles.phoneButton}>
-            <Text style={styles.phoneText}>📱 {item.customers.phone}</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      <View style={styles.orderActions}>
-        {item.status === 'pending' && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.paidButton]}
-            onPress={() => updateOrderStatus(item.id, 'paid')}
-          >
-            <Text style={styles.actionButtonText}>Mark Paid</Text>
-          </TouchableOpacity>
-        )}
-        
-        {item.status === 'paid' && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.completedButton]}
-            onPress={() => updateOrderStatus(item.id, 'completed')}
-          >
-            <Text style={styles.actionButtonText}>Complete</Text>
-          </TouchableOpacity>
-        )}
-
-        {item.status !== 'pending' && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.pendingButton]}
-            onPress={() => updateOrderStatus(item.id, 'pending')}
-          >
-            <Text style={styles.actionButtonText}>Mark Pending</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </TouchableOpacity>
-  )
+      </TouchableOpacity>
+    )
+  }
 
   const pendingCount = orders.filter(o => o.status === 'pending').length
   const totalRevenue = orders
@@ -500,36 +685,34 @@ export default function OrdersScreen() {
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <View style={[styles.mainContainer, isTablet && styles.tabletContainer]}>
-        <LinearGradient
-          colors={[colors.primary, colors.secondary]}
-          style={styles.header}
-        >
-        <View style={styles.headerTop}>
-          <Text style={styles.title}>Orders</Text>
-          <TouchableOpacity 
-            style={[
-              styles.dateButton, 
-              selectedDate && styles.dateButtonActive,
-              { backgroundColor: selectedDate ? colors.surface : 'rgba(255, 255, 255, 0.15)' }, 
-              { borderColor: selectedDate ? colors.border : 'rgba(255, 255, 255, 0.2)' }
-            ]}
-            onPress={() => setShowCalendar(true)}
-          >
-            <Text style={styles.dateButtonIcon}>📅</Text>
-            <Text style={[styles.dateButtonText, { color: selectedDate ? colors.textPrimary : 'rgba(255, 255, 255, 0.8)' }]}>All Dates</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.headerStats}>
-          <View style={styles.statItem}>
+        <StandardizedHeader
+          title="Orders"
+          rightComponent={
+            <TouchableOpacity 
+              style={[
+                styles.dateButton, 
+                selectedDate && styles.dateButtonActive,
+              ]}
+              onPress={() => setShowCalendar(true)}
+            >
+              <Text style={styles.dateButtonIcon}>📅</Text>
+              <Text style={[styles.dateButtonText, selectedDate && styles.dateButtonTextActive]}>
+                {formatSelectedDate()}
+              </Text>
+            </TouchableOpacity>
+          }
+        />
+        
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
             <Text style={styles.statValue}>{pendingCount}</Text>
-            <Text style={styles.statLabel}>Pending</Text>
+            <Text style={styles.statLabel}>Pending Orders</Text>
           </View>
-          <View style={styles.statItem}>
+          <View style={styles.statCard}>
             <Text style={styles.statValue}>RM {totalRevenue.toFixed(0)}</Text>
-            <Text style={styles.statLabel}>Revenue</Text>
+            <Text style={styles.statLabel}>Total Revenue</Text>
           </View>
         </View>
-      </LinearGradient>
 
       <View style={styles.searchContainer}>
         <TextInput
@@ -594,6 +777,30 @@ export default function OrdersScreen() {
       >
         <Text style={styles.floatingButtonText}>+</Text>
       </TouchableOpacity>
+
+      {/* Payment Confirmation Modal */}
+      <PaymentConfirmationModal
+        visible={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false)
+          setSelectedOrder(null) // Clear after modal closes
+        }}
+        onConfirm={confirmPayment}
+        amount={selectedOrder?.amount || 0}
+        customerName={selectedOrder?.customers?.name}
+      />
+
+      {/* Order Completion Modal */}
+      <OrderCompletionModal
+        visible={showCompletionModal}
+        onClose={() => {
+          setShowCompletionModal(false)
+          setSelectedOrder(null) // Clear after modal closes
+        }}
+        onConfirm={confirmCompletion}
+        orderAmount={selectedOrder?.amount || 0}
+        customerName={selectedOrder?.customers?.name || 'customer'}
+      />
       </View>
     </SafeAreaView>
   )

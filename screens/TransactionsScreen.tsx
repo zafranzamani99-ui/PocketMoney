@@ -15,11 +15,12 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 const { width: screenWidth } = Dimensions.get('window')
 const isTablet = screenWidth >= 768
 import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
-import { useTheme } from '../contexts/ThemeContext.js'
+import { useTheme } from '../contexts/ThemeContext'
 import { supabase } from '../lib/supabase'
 import CalendarFilter from '../components/CalendarFilter'
 import TransactionDetailModal from '../components/TransactionDetailModal'
 import AddExpenseModal from '../components/AddExpenseModal'
+import StandardizedHeader from '../components/StandardizedHeader'
 
 
 interface Transaction {
@@ -178,54 +179,96 @@ export default function TransactionsScreen() {
     })
   }
 
-  const renderTransaction = ({ item }: { item: Transaction }) => (
-    <TouchableOpacity 
-      style={styles.transactionItem}
-      onPress={() => handleTransactionPress(item)}
-    >
-      <View style={styles.transactionLeft}>
-        <View style={styles.transactionIcon}>
-          <Text style={styles.transactionEmoji}>
-            {item.type === 'income' ? '💰' : '💸'}
-          </Text>
+  const renderTransaction = ({ item }: { item: Transaction }) => {
+    const getCategoryIcon = () => {
+      if (item.type === 'income') return '💰'
+      
+      const category = item.category?.toLowerCase() || ''
+      if (category.includes('food') || category.includes('restaurant')) return '🍽️'
+      if (category.includes('transport') || category.includes('fuel')) return '🚗'
+      if (category.includes('shopping') || category.includes('retail')) return '🛍️'
+      if (category.includes('utilities') || category.includes('bill')) return '💡'
+      if (category.includes('entertainment') || category.includes('movie')) return '🎬'
+      if (category.includes('health') || category.includes('medical')) return '🏥'
+      if (category.includes('office') || category.includes('business')) return '🏢'
+      return '💸'
+    }
+
+    return (
+      <TouchableOpacity 
+        style={styles.transactionCard}
+        onPress={() => handleTransactionPress(item)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.transactionCardContent}>
+          {/* Transaction Icon */}
+          <View style={[
+            styles.transactionIconContainer,
+            item.type === 'income' ? styles.incomeIconContainer : styles.expenseIconContainer
+          ]}>
+            <Text style={styles.transactionEmoji}>{getCategoryIcon()}</Text>
+          </View>
+
+          {/* Transaction Info */}
+          <View style={styles.transactionInfo}>
+            <Text style={styles.transactionDescription}>
+              {item.description || 'Transaction'}
+            </Text>
+            <View style={styles.transactionMeta}>
+              <Text style={styles.transactionCategory}>{item.category}</Text>
+              <Text style={styles.transactionSeparator}>•</Text>
+              <Text style={styles.transactionDateTime}>
+                {formatDate(item.created_at)} • {formatTime(item.created_at)}
+              </Text>
+            </View>
+            
+            {item.receipt_url && (
+              <View style={styles.receiptIndicator}>
+                <Text style={styles.receiptIcon}>📄</Text>
+                <Text style={styles.receiptText}>Receipt attached</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Amount Section */}
+          <View style={styles.transactionAmountSection}>
+            <Text style={[
+              styles.transactionAmount,
+              item.type === 'income' ? styles.incomeAmount : styles.expenseAmount
+            ]}>
+              <Text style={[
+                styles.transactionAmountPrefix,
+                item.type === 'income' ? styles.incomeAmount : styles.expenseAmount
+              ]}>
+                {item.type === 'income' ? '+' : '-'}
+              </Text>
+              RM {item.amount.toFixed(2)}
+            </Text>
+          </View>
         </View>
-        <View style={styles.transactionDetails}>
-          <Text style={styles.transactionDescription}>{item.description}</Text>
-          <Text style={styles.transactionCategory}>{item.category}</Text>
-          <Text style={styles.transactionDateTime}>{formatDate(item.created_at)} • {formatTime(item.created_at)}</Text>
-        </View>
-      </View>
-      <View style={styles.transactionRight}>
-        <Text style={[
-          styles.transactionAmount,
-          item.type === 'income' ? styles.incomeAmount : styles.expenseAmount
-        ]}>
-          {item.type === 'income' ? '+' : '-'}RM {item.amount.toFixed(2)}
-        </Text>
-        <Text style={styles.chevron}>›</Text>
-      </View>
-    </TouchableOpacity>
-  )
+      </TouchableOpacity>
+    )
+  }
 
   const styles = createStyles(colors)
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <View style={[styles.mainContainer, isTablet && styles.tabletContainer]}>
-        <View style={styles.header}>
-        <Text style={styles.title}>Transactions</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity 
-            style={[styles.dateButton, selectedDate && styles.dateButtonActive]}
-            onPress={() => setShowCalendar(true)}
-          >
-            <Text style={styles.dateButtonIcon}>📅</Text>
-            <Text style={[styles.dateButtonText, selectedDate && styles.dateButtonTextActive]}>
-              {formatSelectedDate()}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        <StandardizedHeader
+          title="Transactions"
+          rightComponent={
+            <TouchableOpacity 
+              style={[styles.dateButton, selectedDate && styles.dateButtonActive]}
+              onPress={() => setShowCalendar(true)}
+            >
+              <Text style={styles.dateButtonIcon}>📅</Text>
+              <Text style={[styles.dateButtonText, selectedDate && styles.dateButtonTextActive]}>
+                {formatSelectedDate()}
+              </Text>
+            </TouchableOpacity>
+          }
+        />
 
       <View style={styles.searchContainer}>
         <TextInput
@@ -258,7 +301,7 @@ export default function TransactionsScreen() {
       </View>
 
       <View style={styles.summaryRow}>
-        <View style={styles.summaryItem}>
+        <View style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>Total Income</Text>
           <Text style={[styles.summaryValue, styles.incomeAmount]}>
             +RM {transactions
@@ -267,7 +310,7 @@ export default function TransactionsScreen() {
               .toFixed(2)}
           </Text>
         </View>
-        <View style={styles.summaryItem}>
+        <View style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>Total Expenses</Text>
           <Text style={[styles.summaryValue, styles.expenseAmount]}>
             -RM {transactions
@@ -335,7 +378,6 @@ const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    width: '100%',
   },
   mainContainer: {
     flex: 1,
@@ -345,42 +387,30 @@ const createStyles = (colors: any) => StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg, // Standardized padding for SafeAreaView
-    paddingBottom: Spacing.md,
-    marginTop: Spacing.xxl, // Push title down for proper spacing
-  },
-  title: {
-    fontSize: Typography.fontSizes.display,
-    fontFamily: Typography.fontFamily.bold,
-    color: colors.textPrimary,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
+
+  // Header Controls  
   dateButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   dateButtonActive: {
-    backgroundColor: colors.primary + '20',
+    backgroundColor: colors.primary + '10',
     borderColor: colors.primary,
   },
   dateButtonIcon: {
-    fontSize: 16,
-    marginRight: Spacing.sm,
+    fontSize: 14,
+    marginRight: Spacing.xs,
   },
   dateButtonText: {
     fontSize: Typography.fontSizes.bodySmall,
@@ -389,142 +419,190 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   dateButtonTextActive: {
     color: colors.primary,
+    fontFamily: Typography.fontFamily.semiBold,
   },
+
+  // Search & Filter
   searchContainer: {
     paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   searchInput: {
     backgroundColor: colors.surface,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
     color: colors.textPrimary,
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
+  
   filterContainer: {
     flexDirection: 'row',
     paddingHorizontal: Spacing.lg,
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
+    gap: Spacing.xs,
+    marginBottom: Spacing.lg,
   },
   filterButton: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.md,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
   },
   filterButtonActive: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
   },
   filterButtonText: {
-    fontSize: Typography.fontSizes.body,
-    fontFamily: Typography.fontFamily.regular,
+    fontSize: Typography.fontSizes.bodySmall,
+    fontFamily: Typography.fontFamily.medium,
     color: colors.textSecondary,
   },
   filterButtonTextActive: {
     color: colors.textPrimary,
-    fontFamily: Typography.fontFamily.medium,
+    fontFamily: Typography.fontFamily.semiBold,
   },
+
+  // Summary Cards
   summaryRow: {
     flexDirection: 'row',
     paddingHorizontal: Spacing.lg,
-    gap: Spacing.md,
-    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
   },
-  summaryItem: {
+  summaryCard: {
     flex: 1,
     backgroundColor: colors.surface,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.lg,
     padding: Spacing.md,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
     borderWidth: 1,
     borderColor: colors.border,
-    alignItems: 'center',
   },
   summaryLabel: {
     fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.medium,
     color: colors.textSecondary,
-    marginBottom: Spacing.xs,
+    marginBottom: 4,
+    textAlign: 'center',
   },
   summaryValue: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.bold,
+    textAlign: 'center',
   },
+
+  // Transaction List
   transactionsList: {
     flex: 1,
   },
   transactionsListContent: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xl,
+    paddingBottom: 100,
   },
-  transactionItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+
+  // Beautiful Transaction Cards
+  transactionCard: {
     backgroundColor: colors.surface,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.sm,
-    marginBottom: Spacing.sm,
+    borderRadius: BorderRadius.xl,
+    marginBottom: Spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
     borderWidth: 1,
     borderColor: colors.border,
+    overflow: 'hidden',
   },
-  transactionLeft: {
+
+  transactionCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    padding: Spacing.md,
   },
-  transactionIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.background,
+
+  // Transaction Icon
+  transactionIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: Spacing.sm,
+    marginRight: Spacing.md,
+  },
+  incomeIconContainer: {
+    backgroundColor: colors.success + '15',
+  },
+  expenseIconContainer: {
+    backgroundColor: colors.error + '15',
   },
   transactionEmoji: {
-    fontSize: 18,
+    fontSize: 20,
   },
-  transactionDetails: {
+
+  // Transaction Details
+  transactionInfo: {
     flex: 1,
   },
   transactionDescription: {
     fontSize: Typography.fontSizes.body,
-    fontFamily: Typography.fontFamily.medium,
+    fontFamily: Typography.fontFamily.semiBold,
     color: colors.textPrimary,
-    marginBottom: Spacing.xs,
+    marginBottom: 2,
+  },
+  transactionMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
   },
   transactionCategory: {
     fontSize: Typography.fontSizes.caption,
-    fontFamily: Typography.fontFamily.regular,
+    fontFamily: Typography.fontFamily.medium,
     color: colors.textSecondary,
-    marginBottom: Spacing.xs,
+  },
+  transactionSeparator: {
+    fontSize: Typography.fontSizes.caption,
+    color: colors.textSecondary,
+    marginHorizontal: Spacing.xs,
   },
   transactionDateTime: {
-    fontSize: Typography.fontSizes.bodySmall,
+    fontSize: Typography.fontSizes.caption,
     fontFamily: Typography.fontFamily.regular,
     color: colors.textSecondary,
   },
-  transactionRight: {
+
+  // Amount Section
+  transactionAmountSection: {
     alignItems: 'flex-end',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
   },
   transactionAmount: {
-    fontSize: Typography.fontSizes.body,
-    fontFamily: Typography.fontFamily.bold,
-  },
-  chevron: {
     fontSize: Typography.fontSizes.subheading,
-    color: colors.textSecondary,
-    fontFamily: Typography.fontFamily.regular,
+    fontFamily: Typography.fontFamily.bold,
+    marginBottom: 2,
+  },
+  transactionAmountPrefix: {
+    fontSize: Typography.fontSizes.body,
+    fontFamily: Typography.fontFamily.semiBold,
   },
   incomeAmount: {
     color: colors.success,
@@ -532,47 +610,71 @@ const createStyles = (colors: any) => StyleSheet.create({
   expenseAmount: {
     color: colors.error,
   },
+
+  // Receipt Indicator
+  receiptIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  receiptIcon: {
+    fontSize: 10,
+    marginRight: 2,
+  },
+  receiptText: {
+    fontSize: Typography.fontSizes.bodySmall,
+    fontFamily: Typography.fontFamily.regular,
+    color: colors.textSecondary,
+  },
+
+  // Empty State
   emptyContainer: {
     alignItems: 'center',
     paddingVertical: Spacing.xxl * 2,
+    paddingHorizontal: Spacing.lg,
   },
   emptyEmoji: {
-    fontSize: 64,
+    fontSize: 48,
     marginBottom: Spacing.lg,
+    opacity: 0.6,
   },
   emptyTitle: {
     fontSize: Typography.fontSizes.subheading,
-    fontFamily: Typography.fontFamily.bold,
+    fontFamily: Typography.fontFamily.semiBold,
     color: colors.textPrimary,
     marginBottom: Spacing.sm,
+    textAlign: 'center',
   },
   emptyText: {
     fontSize: Typography.fontSizes.body,
     fontFamily: Typography.fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: Typography.lineHeights.body,
-    paddingHorizontal: Spacing.lg,
+    lineHeight: 22,
+    maxWidth: 280,
   },
+
+  // Floating Action Button
   floatingButton: {
     position: 'absolute',
     right: Spacing.lg,
-    bottom: Spacing.lg,
+    bottom: Spacing.xl,
     width: 56,
     height: 56,
     borderRadius: 28,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
+    elevation: 8,
   },
   floatingButtonText: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: Typography.fontFamily.bold,
     color: colors.textPrimary,
+    marginTop: -2,
   },
 })

@@ -14,7 +14,7 @@ import {
 } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
-import { useTheme } from '../contexts/ThemeContext.js'
+import { useTheme, ColorScheme } from '../contexts/ThemeContext'
 import { supabase } from '../lib/supabase'
 import { PrimaryButton, SecondaryButton } from './buttons'
 
@@ -47,7 +47,7 @@ interface Wallet {
 }
 
 export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpenseModalProps) {
-  const { colors }: any = useTheme()
+  const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
@@ -140,7 +140,7 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
       
       // Set default wallet to the first one (primary wallet)
       if (data && data.length > 0 && !selectedWallet) {
-        setSelectedWallet(data[0].id)
+        setSelectedWallet(data[0]?.id || '')
       }
     } catch (error) {
       console.error('Error loading wallets:', error)
@@ -243,7 +243,7 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
     setAmount('')
     setDescription('')
     setSelectedCategory('')
-    setSelectedWallet(wallets.length > 0 ? wallets[0].id : '')
+    setSelectedWallet(wallets.length > 0 ? wallets[0]?.id || '' : '')
   }
 
   const handleClose = () => {
@@ -412,7 +412,7 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
   )
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
+const createStyles = (colors: ColorScheme) => StyleSheet.create({
   overlay: {
     position: 'absolute',
     top: -100,

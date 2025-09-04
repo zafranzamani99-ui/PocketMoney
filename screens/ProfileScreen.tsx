@@ -16,10 +16,11 @@ const isTablet = screenWidth >= 768
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
-import { useTheme } from '../contexts/ThemeContext.js'
+import { useTheme } from '../contexts/ThemeContext'
 import { supabase } from '../lib/supabase'
 import { RootStackParamList } from '../navigation/AppNavigator'
 import { RateApp } from '../utils/rateApp'
+import StandardizedHeader from '../components/StandardizedHeader'
 
 type NavigationProp = StackNavigationProp<RootStackParamList>
 
@@ -279,9 +280,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={[styles.mainContainer, isTablet && styles.tabletContainer]}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Profile</Text>
-        </View>
+        <StandardizedHeader title="Profile" />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.userCard}>
@@ -383,15 +382,6 @@ const createStyles = (colors: any) => StyleSheet.create({
     maxWidth: '95%',
     alignSelf: 'center',
     width: '100%',
-  },
-  header: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-  },
-  title: {
-    fontSize: Typography.fontSizes.display,
-    fontFamily: Typography.fontFamily.bold,
-    color: colors.textPrimary,
   },
   scrollView: {
     flex: 1,

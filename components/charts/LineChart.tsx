@@ -61,7 +61,7 @@ export const LineChart: React.FC<LineChartProps> = ({
   const { colors } = useTheme();
   
   const chartColor = color || colors.primary;
-  const textColor = colors.text;
+  const textColor = colors.textPrimary;
   const gridColor = colors.border;
   
   const padding = 40;
@@ -83,11 +83,11 @@ export const LineChart: React.FC<LineChartProps> = ({
   const generatePath = (dataPoints: DataPoint[], startIndex = 0) => {
     if (dataPoints.length === 0) return '';
     
-    let path = `M ${xScale(startIndex)} ${yScale(dataPoints[0].value)}`;
+    let path = `M ${xScale(startIndex)} ${yScale(dataPoints[0]?.value || 0)}`;
     
     for (let i = 1; i < dataPoints.length; i++) {
       const x = xScale(startIndex + i);
-      const y = yScale(dataPoints[i].value);
+      const y = yScale(dataPoints[i]?.value || 0);
       path += ` L ${x} ${y}`;
     }
     
@@ -98,11 +98,11 @@ export const LineChart: React.FC<LineChartProps> = ({
   const generateGradientPath = () => {
     if (data.length === 0) return '';
     
-    let path = `M ${xScale(0)} ${yScale(data[0].value)}`;
+    let path = `M ${xScale(0)} ${yScale(data[0]?.value || 0)}`;  
     
     for (let i = 1; i < data.length; i++) {
       const x = xScale(i);
-      const y = yScale(data[i].value);
+      const y = yScale(data[i]?.value || 0);
       path += ` L ${x} ${y}`;
     }
     
@@ -185,7 +185,7 @@ export const LineChart: React.FC<LineChartProps> = ({
             fill={textColor}
             textAnchor="middle"
           >
-            {formatDate(data[i].date)}
+            {formatDate(data[i]?.date || '')}
           </SvgText>
         );
       }

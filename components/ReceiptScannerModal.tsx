@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import {
   View,
   Text,
@@ -15,13 +15,22 @@ import { CameraView, CameraType, FlashMode, useCameraPermissions } from 'expo-ca
 import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
-import { useTheme } from '../contexts/ThemeContext.js'
+import { useTheme, ColorScheme } from '../contexts/ThemeContext'
 import { supabase } from '../lib/supabase'
+
+interface ExtractedReceiptData {
+  store_name: string
+  total_amount: number
+  date: string
+  items: Array<{ name: string; price: number }>
+  payment_method?: string
+  gst_amount?: number
+}
 
 interface ReceiptScannerModalProps {
   visible: boolean
   onClose: () => void
-  onSuccess: (extractedData: any) => void
+  onSuccess: (extractedData: ExtractedReceiptData) => void
 }
 
 export default function ReceiptScannerModal({ visible, onClose, onSuccess }: ReceiptScannerModalProps) {
@@ -32,6 +41,24 @@ export default function ReceiptScannerModal({ visible, onClose, onSuccess }: Rec
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
   const cameraRef = useRef<CameraView>(null)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isMountedRef = useRef(true)
+
+  // Cleanup effect
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
+      // Cleanup captured image URI to prevent memory leaks
+      if (capturedImage) {
+        setCapturedImage(null)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (visible && !permission?.granted) {
@@ -39,8 +66,8 @@ export default function ReceiptScannerModal({ visible, onClose, onSuccess }: Rec
     }
   }, [visible, permission])
 
-  const takePicture = async () => {
-    if (!cameraRef.current) return
+  const takePicture = useCallback(async () => {
+    if (!cameraRef.current || !isMountedRef.current) return
 
     try {
       const photo = await cameraRef.current.takePictureAsync({
@@ -48,16 +75,20 @@ export default function ReceiptScannerModal({ visible, onClose, onSuccess }: Rec
         base64: false,
       })
 
-      if (photo?.uri) {
+      if (photo?.uri && isMountedRef.current) {
         setCapturedImage(photo.uri)
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to take picture')
-      console.error(error)
+      if (isMountedRef.current) {
+        Alert.alert('Error', 'Failed to take picture')
+        console.error('takePicture error:', error)
+      }
     }
-  }
+  }, [])
 
-  const pickImage = async () => {
+  const pickImage = useCallback(async () => {
+    if (!isMountedRef.current) return
+
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -66,14 +97,16 @@ export default function ReceiptScannerModal({ visible, onClose, onSuccess }: Rec
         quality: 0.8,
       })
 
-      if (!result.canceled && result.assets[0]) {
+      if (!result.canceled && result.assets[0] && isMountedRef.current) {
         setCapturedImage(result.assets[0].uri)
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick image')
-      console.error(error)
+      if (isMountedRef.current) {
+        Alert.alert('Error', 'Failed to pick image')
+        console.error('pickImage error:', error)
+      }
     }
-  }
+  }, [])
 
   const cropImage = async () => {
     if (!capturedImage) return
@@ -149,9 +182,9 @@ export default function ReceiptScannerModal({ visible, onClose, onSuccess }: Rec
     }
   }
 
-  const processWithGroq = async (imageUrl: string) => {
+  const processWithGroq = useCallback(async (imageUrl: string): Promise<ExtractedReceiptData> => {
     // Mock Groq API processing - replace with actual implementation
-    const mockData = {
+    const mockData: ExtractedReceiptData = {
       store_name: 'KK Mart',
       total_amount: 25.50,
       date: new Date().toISOString().split('T')[0],
@@ -164,20 +197,36 @@ export default function ReceiptScannerModal({ visible, onClose, onSuccess }: Rec
       gst_amount: 1.53,
     }
 
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    return mockData
-  }
+    // Simulate API delay with proper cleanup
+    return new Promise<ExtractedReceiptData>((resolve, reject) => {
+      timeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          timeoutRef.current = null
+          resolve(mockData)
+        } else {
+          reject(new Error('Component unmounted'))
+        }
+      }, 2000)
+    })
+  }, [])
 
-  const retakePhoto = () => {
-    setCapturedImage(null)
-  }
+  const retakePhoto = useCallback(() => {
+    if (isMountedRef.current) {
+      setCapturedImage(null)
+    }
+  }, [])
 
-  const handleClose = () => {
-    setCapturedImage(null)
-    setProcessing(false)
+  const handleClose = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    if (isMountedRef.current) {
+      setCapturedImage(null)
+      setProcessing(false)
+    }
     onClose()
-  }
+  }, [onClose])
 
   const styles = createStyles(colors)
 
@@ -284,7 +333,7 @@ export default function ReceiptScannerModal({ visible, onClose, onSuccess }: Rec
   )
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
+const createStyles = (colors: ColorScheme) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'black',

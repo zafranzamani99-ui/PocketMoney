@@ -1,9 +1,30 @@
-import { supabase } from '../lib/supabase'
-import { Database } from '../types/database'
-import { googleapis } from 'googleapis'
+import { supabase, Database } from '../lib/supabase'
+import { google } from 'googleapis'
 
-type GoogleSheetsSync = Database['public']['Tables']['google_sheets_sync']['Row']
-type SyncOperation = Database['public']['Tables']['sync_operations']['Row']
+// Type definitions for Google Sheets sync
+interface GoogleSheetsSync {
+  id: string
+  user_id: string
+  spreadsheet_id: string
+  spreadsheet_url: string
+  sync_config: SyncConfig
+  last_sync_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+interface SyncOperation {
+  id: string
+  user_id: string
+  operation_type: 'sync' | 'export'
+  status: 'pending' | 'running' | 'completed' | 'failed'
+  records_processed: number
+  records_failed: number
+  errors: string[] | null
+  started_at: string
+  completed_at: string | null
+  metadata: any
+}
 
 interface SheetTemplate {
   name: string
@@ -85,13 +106,13 @@ class GoogleSheetsService {
   }> {
     try {
       // Create Google Sheets client
-      const auth = new googleapis.auth.OAuth2()
+      const auth = new google.auth.OAuth2()
       auth.setCredentials({
         access_token: authCredentials.accessToken,
         refresh_token: authCredentials.refreshToken
       })
 
-      const sheets = googleapis.sheets({ version: 'v4', auth })
+      const sheets = google.sheets({ version: 'v4', auth })
 
       // Create new spreadsheet
       const spreadsheetTitle = `PocketMoney_${new Date().toISOString().substring(0, 7)}`

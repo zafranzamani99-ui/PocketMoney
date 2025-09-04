@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
-import { useTheme } from '../contexts/ThemeContext.js'
+import { useTheme } from '../contexts/ThemeContext'
 import { walletService, Wallet } from '../services/walletService'
 import { supabase } from '../lib/supabase'
 

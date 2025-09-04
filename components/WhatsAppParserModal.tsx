@@ -13,7 +13,7 @@ import {
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
-import { useTheme } from '../contexts/ThemeContext.js'
+import { useTheme } from '../contexts/ThemeContext'
 import { supabase } from '../lib/supabase'
 import { ButtonContainer, PrimaryButton, SecondaryButton } from './buttons'
 
@@ -155,7 +155,7 @@ export default function WhatsAppParserModal({ visible, onClose, onSuccess }: Wha
     const lines = text.split('\n').map(line => line.trim()).filter(Boolean)
     
     // Extract customer name (usually first line or from contact info)
-    const customer_name = extractCustomerName(lines)
+    const customer_name = extractCustomerName(lines) || 'Unknown Customer'
     
     // Extract phone number
     const customer_phone = extractPhone(text)
@@ -200,7 +200,7 @@ export default function WhatsAppParserModal({ visible, onClose, onSuccess }: Wha
   const extractPhone = (text: string): string | undefined => {
     for (const pattern of patterns.phone) {
       const match = text.match(pattern)
-      if (match) return match[1]
+      if (match) return match[1] || ''
     }
     return undefined
   }
@@ -223,30 +223,30 @@ export default function WhatsAppParserModal({ visible, onClose, onSuccess }: Wha
 
         if (pattern.source.includes('(\\d+)\\s*[x×]')) {
           // Pattern: "2x Nasi Lemak = RM15"
-          quantity = parseInt(match[1])
-          name = match[2].trim()
+          quantity = parseInt(match[1] || '1')
+          name = match[2]?.trim() || ''
           price = match[3] ? parseFloat(match[3]) : undefined
         } else if (pattern.source.includes('[x×]\\s*(\\d+)')) {
           // Pattern: "Nasi Lemak x2 (RM15)"
-          name = match[1].trim()
-          quantity = parseInt(match[2])
+          name = match[1]?.trim() || ''
+          quantity = parseInt(match[2] || '1')
           price = match[3] ? parseFloat(match[3]) : undefined
         } else {
           // Pattern: "- 2 Nasi Lemak = RM15" or "- Nasi Lemak = RM15"
-          const firstPart = match[1].trim()
+          const firstPart = match[1]?.trim() || ''
           const quantityMatch = firstPart.match(/^(\d+)\s+(.+)/)
           if (quantityMatch) {
-            quantity = parseInt(quantityMatch[1])
-            name = quantityMatch[2]
+            quantity = parseInt(quantityMatch[1] || '1')
+            name = quantityMatch[2] || ''
           } else {
             quantity = 1
-            name = firstPart
+            name = firstPart || ''
           }
           price = match[2] ? parseFloat(match[2]) : undefined
         }
 
         if (name && !name.includes('Total') && !name.includes('total')) {
-          items.push({ name: name.trim(), quantity, price })
+          items.push({ name: name?.trim() || '', quantity: quantity || 1, price: price || 0 })
         }
       }
     }

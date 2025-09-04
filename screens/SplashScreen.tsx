@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Typography, Spacing } from '../constants/themeHooks'
-import { useTheme } from '../contexts/ThemeContext.js'
+import { useTheme } from '../contexts/ThemeContext'
 
 const { width: screenWidth } = Dimensions.get('window')
 const isTablet = screenWidth >= 768

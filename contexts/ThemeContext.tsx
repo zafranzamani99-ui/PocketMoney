@@ -1,11 +1,63 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
-import { Appearance } from 'react-native'
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { Appearance, ColorSchemeName } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '../lib/supabase'
 
-const lightColors = {
+// Theme types
+export type ThemeMode = 'light' | 'dark' | 'system'
+
+export interface ColorScheme {
+  // Primary Colors
+  primary: string
+  primaryLight: string
+  secondary: string
+  accent: string
+  background: string
+  surface: string
+  surfaceElevated: string
+  light: string
+  
+  // Text Colors
+  text: string
+  textPrimary: string
+  textSecondary: string
+  textTertiary: string
+  textDark: string
+  
+  // Status Colors
+  success: string
+  error: string
+  warning: string
+  info: string
+  
+  // UI Elements
+  border: string
+  borderLight: string
+  card: string
+  white: string
+  
+  // Gradients
+  gradientStart: string
+  gradientEnd: string
+  gradientAccent: string
+}
+
+export interface ThemeContextType {
+  theme: ThemeMode
+  colors: ColorScheme
+  isDark: boolean
+  setTheme: (theme: ThemeMode) => Promise<void>
+  toggleTheme: () => void
+}
+
+interface ThemeProviderProps {
+  children: ReactNode
+}
+
+const lightColors: ColorScheme = {
   // Primary Colors
   primary: '#80D8C3',
+  primaryLight: '#A8E6D0',
   secondary: '#4DA8DA', 
   accent: '#FFD66B',
   background: '#FFFFFF',
@@ -14,6 +66,7 @@ const lightColors = {
   light: '#F5F5F5',
   
   // Text Colors
+  text: '#1A1A1A',
   textPrimary: '#1A1A1A',
   textSecondary: '#6B7280',
   textTertiary: '#9CA3AF',
@@ -28,6 +81,8 @@ const lightColors = {
   // UI Elements
   border: '#E5E7EB',
   borderLight: '#F3F4F6',
+  card: '#FFFFFF',
+  white: '#FFFFFF',
   
   // Gradients
   gradientStart: '#80D8C3',
@@ -35,9 +90,10 @@ const lightColors = {
   gradientAccent: '#FFD66B',
 }
 
-const darkColors = {
+const darkColors: ColorScheme = {
   // Primary Colors
   primary: '#80D8C3',
+  primaryLight: '#A8E6D0',
   secondary: '#4DA8DA',
   accent: '#FFD66B',
   background: '#000000',
@@ -46,6 +102,7 @@ const darkColors = {
   light: '#F5F5F5',
   
   // Text Colors
+  text: '#FFFFFF',
   textPrimary: '#FFFFFF',
   textSecondary: '#A0A0A0',
   textTertiary: '#6B7280',
@@ -60,6 +117,8 @@ const darkColors = {
   // UI Elements
   border: '#2A2A2A',
   borderLight: '#374151',
+  card: '#1A1A1A',
+  white: '#FFFFFF',
   
   // Gradients
   gradientStart: '#80D8C3',
@@ -67,11 +126,11 @@ const darkColors = {
   gradientAccent: '#FFD66B',
 }
 
-const ThemeContext = createContext(undefined)
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
-export const ThemeProvider = ({ children }) => {
-  const [theme, setThemeState] = useState('system')
-  const [systemTheme, setSystemTheme] = useState('dark')
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+  const [theme, setThemeState] = useState<ThemeMode>('system')
+  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('dark')
 
   // Determine current effective theme
   const effectiveTheme = theme === 'system' ? systemTheme : theme
@@ -85,7 +144,7 @@ export const ThemeProvider = ({ children }) => {
 
   // Listen to system theme changes
   useEffect(() => {
-    const subscription = Appearance.addChangeListener(({ colorScheme }) => {
+    const subscription = Appearance.addChangeListener(({ colorScheme }: { colorScheme: ColorSchemeName }) => {
       setSystemTheme(colorScheme === 'dark' ? 'dark' : 'light')
     })
 
@@ -93,15 +152,15 @@ export const ThemeProvider = ({ children }) => {
     const initialTheme = Appearance.getColorScheme()
     setSystemTheme(initialTheme === 'dark' ? 'dark' : 'light')
 
-    return () => subscription.remove()
+    return () => subscription?.remove()
   }, [])
 
-  const loadTheme = async () => {
+  const loadTheme = async (): Promise<void> => {
     try {
       // Try to load from AsyncStorage first (faster)
       const storedTheme = await AsyncStorage.getItem('theme')
       if (storedTheme && ['light', 'dark', 'system'].includes(storedTheme)) {
-        setThemeState(storedTheme)
+        setThemeState(storedTheme as ThemeMode)
       }
 
       // Then sync with database if user is authenticated
@@ -113,8 +172,8 @@ export const ThemeProvider = ({ children }) => {
           .eq('user_id', user.id)
           .single()
 
-        if (!error && data?.theme_mode) {
-          const dbTheme = data.theme_mode
+        if (!error && data?.theme_mode && ['light', 'dark', 'system'].includes(data.theme_mode)) {
+          const dbTheme = data.theme_mode as ThemeMode
           setThemeState(dbTheme)
           // Update local storage to match database
           await AsyncStorage.setItem('theme', dbTheme)
@@ -125,7 +184,7 @@ export const ThemeProvider = ({ children }) => {
     }
   }
 
-  const setTheme = async (newTheme) => {
+  const setTheme = async (newTheme: ThemeMode): Promise<void> => {
     try {
       setThemeState(newTheme)
       
@@ -148,7 +207,7 @@ export const ThemeProvider = ({ children }) => {
     }
   }
 
-  const toggleTheme = () => {
+  const toggleTheme = (): void => {
     if (theme === 'system') {
       setTheme('light')
     } else if (theme === 'light') {
@@ -158,7 +217,7 @@ export const ThemeProvider = ({ children }) => {
     }
   }
 
-  const contextValue = {
+  const contextValue: ThemeContextType = {
     theme,
     colors,
     isDark,
@@ -173,7 +232,7 @@ export const ThemeProvider = ({ children }) => {
   )
 }
 
-export const useTheme = () => {
+export const useTheme = (): ThemeContextType => {
   const context = useContext(ThemeContext)
   if (context === undefined) {
     throw new Error('useTheme must be used within a ThemeProvider')

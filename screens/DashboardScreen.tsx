@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
-import { useTheme } from '../contexts/ThemeContext.js'
+import { useTheme } from '../contexts/ThemeContext'
 import { supabase } from '../lib/supabase'
 import { RootStackParamList } from '../navigation/AppNavigator'
 
@@ -26,6 +26,7 @@ import WhatsAppParserModal from '../components/WhatsAppParserModal'
 import WalletManagementModal from '../components/WalletManagementModal'
 import DailyClosingModal from '../components/DailyClosingModal'
 import VoiceInputModal from '../components/VoiceInputModal'
+import StandardizedHeader from '../components/StandardizedHeader'
 
 type NavigationProp = StackNavigationProp<RootStackParamList>
 
@@ -359,22 +360,21 @@ export default function DashboardScreen() {
         }
       >
         <View style={[styles.contentContainer, isTablet && styles.tabletContainer]}>
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <Text style={styles.greeting}>{getGreeting()}</Text>
-              <Text style={styles.businessName}>
-                {user?.business_name || user?.email || 'Welcome'}
-              </Text>
-            </View>
-            
-            <TouchableOpacity 
-              style={styles.posToggle}
-              onPress={() => navigation.navigate('POS')}
-            >
-              <Text style={styles.posToggleIcon}>🏪</Text>
-              <Text style={styles.posToggleText}>POS</Text>
-            </TouchableOpacity>
-          </View>
+          <StandardizedHeader
+            title="Home"
+            showGreeting={true}
+            greetingText={getGreeting()}
+            businessName={user?.business_name || user?.email || 'Welcome'}
+            rightComponent={
+              <TouchableOpacity 
+                style={styles.posToggle}
+                onPress={() => navigation.navigate('POS')}
+              >
+                <Text style={styles.posToggleIcon}>🏪</Text>
+                <Text style={styles.posToggleText}>POS</Text>
+              </TouchableOpacity>
+            }
+          />
 
         <View style={styles.summaryCards}>
           <View style={styles.summaryCard}>
@@ -633,28 +633,6 @@ const createStyles = (colors: any) => StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
     paddingHorizontal: isTablet ? Spacing.md : Spacing.xl,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    padding: isTablet ? Spacing.xl : Spacing.lg,
-    paddingBottom: isTablet ? Spacing.xl : Spacing.md,
-    marginTop: Spacing.xxl, 
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  greeting: {
-    fontSize: isTablet ? Typography.fontSizes.subheading : Typography.fontSizes.body,
-    fontFamily: Typography.fontFamily.regular,
-    color: colors.textSecondary,
-    marginBottom: Spacing.xs,
-  },
-  businessName: {
-    fontSize: isTablet ? Typography.fontSizes.display : Typography.fontSizes.heading,
-    fontFamily: Typography.fontFamily.bold,
-    color: colors.textPrimary,
   },
   posToggle: {
     backgroundColor: colors.primary,

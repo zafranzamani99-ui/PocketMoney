@@ -10,7 +10,7 @@ import {
   Animated,
 } from 'react-native'
 import { Typography, Spacing, BorderRadius } from '../constants/themeHooks'
-import { useTheme } from '../contexts/ThemeContext.js'
+import { useTheme, ColorScheme } from '../contexts/ThemeContext'
 import { voiceService, VoiceResult } from '../services/voiceService'
 
 interface VoiceInputModalProps {
@@ -26,13 +26,22 @@ export default function VoiceInputModal({ visible, onClose, onResult }: VoiceInp
   const [lastResult, setLastResult] = useState<VoiceResult | null>(null)
 
   useEffect(() => {
-    if (visible) {
-      initializeVoice()
-    } else {
+    let isMounted = true
+    
+    const setupVoice = async () => {
+      if (visible && isMounted) {
+        await initializeVoice()
+      } else if (!visible && isMounted) {
+        await cleanup()
+      }
+    }
+    
+    setupVoice()
+    
+    return () => {
+      isMounted = false
       cleanup()
     }
-
-    return () => cleanup()
   }, [visible])
 
   useEffect(() => {
@@ -130,9 +139,11 @@ export default function VoiceInputModal({ visible, onClose, onResult }: VoiceInp
 
   // Simulate voice processing (replace with actual voice service integration)
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null
+    
     if (isListening) {
       // This would be replaced by actual voice service callbacks
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         // Mock result for demonstration
         const mockResult: VoiceResult = {
           command: 'expense',
@@ -142,8 +153,12 @@ export default function VoiceInputModal({ visible, onClose, onResult }: VoiceInp
         }
         handleVoiceResult(mockResult)
       }, 3000)
+    }
 
-      return () => clearTimeout(timer)
+    return () => {
+      if (timer) {
+        clearTimeout(timer)
+      }
     }
   }, [isListening])
 
@@ -271,7 +286,7 @@ export default function VoiceInputModal({ visible, onClose, onResult }: VoiceInp
   )
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
+const createStyles = (colors: ColorScheme) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

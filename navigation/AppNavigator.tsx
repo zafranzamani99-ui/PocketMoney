@@ -65,20 +65,46 @@ export type RootStackParamList = {
 
 const Stack = createStackNavigator<RootStackParamList>()
 
-export default function AppNavigator() {
+export default function AppNavigator(): JSX.Element {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showSplash, setShowSplash] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setIsLoading(false)
+    let isMounted = true
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (isMounted) {
+        if (error) {
+          console.error('Error getting session:', error)
+        }
+        setSession(session)
+        setIsLoading(false)
+      }
+    }).catch((error) => {
+      if (isMounted) {
+        console.error('Error getting session:', error)
+        setIsLoading(false)
+      }
     })
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
+    // Listen to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (isMounted) {
+          setSession(session)
+          if (event === 'SIGNED_OUT') {
+            setShowSplash(false)
+          }
+        }
+      }
+    )
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   if (isLoading || showSplash) {
